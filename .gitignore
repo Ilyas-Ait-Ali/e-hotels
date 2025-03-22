@@ -1,0 +1,25 @@
+# Environments
+.venv/
+venv/
+env/
+ENV/
+.env
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Environment secrets
+.env
+
+# Flask
+instance/
+.webassets-cache
+
+# Logs
+*.log
+
+# Editors
+.vscode/
+.idea/
+.DS_Store
