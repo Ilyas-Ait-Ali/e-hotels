@@ -8,16 +8,16 @@ CREATE TABLE HotelChain (
 
 -- Hotel Chain Email Addresses (multivalued attribute)
 CREATE TABLE HCEmailAddresses (
-    HotelChainID INTEGER,
-    ChainEmail VARCHAR(100) UNIQUE,
+    HotelChainID INTEGER NOT NULL,
+    ChainEmail VARCHAR(100) NOT NULL UNIQUE,
     PRIMARY KEY (HotelChainID, ChainEmail),
     FOREIGN KEY (HotelChainID) REFERENCES HotelChain(HotelChainID) ON DELETE CASCADE
 );
 
 -- Hotel Chain Phone Numbers (multivalued attribute)
 CREATE TABLE HCPhoneNumbers (
-    HotelChainID INTEGER,
-    ChainPhoneNumber VARCHAR(20) UNIQUE,
+    HotelChainID INTEGER NOT NULL,
+    ChainPhoneNumber VARCHAR(15) NOT NULL UNIQUE,
     PRIMARY KEY (HotelChainID, ChainPhoneNumber),
     FOREIGN KEY (HotelChainID) REFERENCES HotelChain(HotelChainID) ON DELETE CASCADE
 );
@@ -29,6 +29,7 @@ CREATE TABLE Hotel (
     HotelName VARCHAR(255) NOT NULL,
     Rating INTEGER NOT NULL,
     Address VARCHAR(255) NOT NULL,
+    Category VARCHAR(50) NOT NULL,
     Num_Rooms INTEGER NOT NULL,
     ManagerID INTEGER,
     FOREIGN KEY (HotelChainID) REFERENCES HotelChain(HotelChainID) ON DELETE CASCADE
@@ -36,16 +37,16 @@ CREATE TABLE Hotel (
 
 -- Hotel Email Addresses (multivalued attribute)
 CREATE TABLE HEmailAddresses (
-    HotelID INTEGER,
-    HotelEmail VARCHAR(100) UNIQUE,
+    HotelID INTEGER NOT NULL,
+    HotelEmail VARCHAR(100) UNIQUE NOT NULL,
     PRIMARY KEY (HotelID, HotelEmail),
     FOREIGN KEY (HotelID) REFERENCES Hotel(HotelID) ON DELETE CASCADE
 );
 
 -- Hotel Phone Numbers (multivalued attribute)
 CREATE TABLE HPhoneNumbers (
-    HotelID INTEGER,
-    HotelPhoneNumber VARCHAR(20) UNIQUE,
+    HotelID INTEGER NOT NULL,
+    HotelPhoneNumber VARCHAR(15) NOT NULL UNIQUE,
     PRIMARY KEY (HotelID, HotelPhoneNumber),
     FOREIGN KEY (HotelID) REFERENCES Hotel(HotelID) ON DELETE CASCADE
 );
@@ -67,8 +68,8 @@ ALTER TABLE Hotel ADD CONSTRAINT FK_Hotel_Manager
 
 -- Room Table
 CREATE TABLE Room (
-    RoomID INTEGER,
-    HotelID INTEGER,
+    RoomID INTEGER NOT NULL,
+    HotelID INTEGER NOT NULL,
     Price DECIMAL(10, 2) NOT NULL,
     Capacity VARCHAR(20) NOT NULL,
     ViewType VARCHAR(20) NOT NULL,
@@ -80,18 +81,18 @@ CREATE TABLE Room (
 
 -- Room Amenities (multivalued attribute)
 CREATE TABLE RoomAmenities (
-    HotelID INTEGER,
-    RoomID INTEGER,
-    Amenity VARCHAR(100),
+    HotelID INTEGER NOT NULL,
+    RoomID INTEGER NOT NULL,
+    Amenity VARCHAR(100) NOT NULL,
     PRIMARY KEY (HotelID, RoomID, Amenity),
     FOREIGN KEY (HotelID, RoomID) REFERENCES Room(HotelID, RoomID) ON DELETE CASCADE
 );
 
 -- Room Problems (multivalued attribute)
 CREATE TABLE RoomProblems (
-    HotelID INTEGER,
-    RoomID INTEGER,
-    Problem VARCHAR(255),
+    HotelID INTEGER NOT NULL,
+    RoomID INTEGER NOT NULL,
+    Problem VARCHAR(255) NOT NULL,
     ReportDate DATE NOT NULL,
     Resolved BOOLEAN DEFAULT FALSE,
     PRIMARY KEY (HotelID, RoomID, Problem),
@@ -128,7 +129,7 @@ CREATE TABLE Rental (
     CustomerID INTEGER NOT NULL,
     HotelID INTEGER NOT NULL,
     RoomID INTEGER NOT NULL,
-    EmployeeID INTEGER,
+    EmployeeID INTEGER NOT NULL,
     BookingID INTEGER,
     CheckInDate DATE NOT NULL,
     CheckOutDate DATE NOT NULL,
