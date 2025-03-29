@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>📅 Book Room #{{ room_id }} at <strong>{{ hotel_name }}</strong></h2>
+<p>From <strong>{{ checkin }}</strong> to <strong>{{ checkout }}</strong></p>
+
+<form method="POST">
+    <input type="hidden" name="room_id" value="{{ room_id }}">
+    <input type="hidden" name="hotel_id" value="{{ hotel_id }}">
+    <input type="hidden" name="checkin" value="{{ checkin }}">
+    <input type="hidden" name="checkout" value="{{ checkout }}">
+
+    <label for="customer_id">Enter Customer ID:</label>
+    <input type="number" name="customer_id" required><br><br>
+
+    <button type="submit">Confirm Booking</button>
+</form>
+{% endblock %}

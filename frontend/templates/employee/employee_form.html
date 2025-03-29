@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Add' if mode == 'add' else 'Edit' }} Employee{% endblock %}
+
+{% block content %}
+<h2>{{ '➕ Add' if mode == 'add' else '✏️ Edit' }} Employee</h2>
+
+<form method="POST">
+    <div class="mb-3">
+        <label class="form-label">Full Name</label>
+        <input type="text" name="fullname" class="form-control" value="{{ employee.fullname if employee else '' }}" required>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Address</label>
+        <input type="text" name="address" class="form-control" value="{{ employee.address if employee else '' }}" required>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Position</label>
+        <select name="position" class="form-select" required>
+            <option value="">Select...</option>
+            {% for role in ['Manager', 'Receptionist', 'Housekeeper'] %}
+                <option value="{{ role }}" {% if employee and employee.position == role %}selected{% endif %}>{{ role }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">SSN</label>
+        <input type="text" name="ssn" class="form-control" value="{{ employee.ssn if employee else '' }}" required>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Hotel ID</label>
+        <input type="number" name="hotel_id" class="form-control" value="{{ employee.hotelid if employee else '' }}" required>
+    </div>
+
+    <button type="submit" class="btn btn-primary">{{ 'Add' if mode == 'add' else 'Update' }} Employee</button>
+    <a href="{{ url_for('main.manage_employees') }}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}

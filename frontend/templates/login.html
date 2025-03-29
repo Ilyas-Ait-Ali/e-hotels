@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}Login - e-Hotels{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h3 class="card-title text-center mb-4">🔐 Login</h3>
+                {% if error %}
+                    <div class="alert alert-danger" role="alert">
+                        ❌ {{ error }}
+                    </div>
+                {% endif %}
+                <form method="POST">
+                    <div class="mb-3">
+                        <label class="form-label">Full Name:</label>
+                        <input type="text" class="form-control" name="full_name" placeholder="e.g. John Doe/Bob Johnson" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Role:</label><br>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="user_type" value="customer" required>
+                            <label class="form-check-label">Customer</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="user_type" value="employee">
+                            <label class="form-check-label">Employee</label>
+                        </div>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Login</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}Rental Confirmation{% endblock %}
+
+{% block content %}
+<h2>✅ Rental Confirmed</h2>
+
+<div class="alert alert-success">
+    ✅ Rental has been successfully recorded.
+</div>
+
+<p>
+    <strong>Customer:</strong> {{ customer_name }}<br>
+    <strong>Room ID:</strong> {{ room_id }}<br>
+    <strong>Hotel:</strong> {{ hotel_name }}<br>
+    <strong>From:</strong> {{ checkin }}<br>
+    <strong>To:</strong> {{ checkout }}<br>
+    <strong>Payment:</strong> ${{ "%.2f"|format(payment_amount) }} via {{ payment_method }}<br>
+    <small><em>Recorded on {{ current_date }}</em></small>
+</p>
+
+<a href="{{ url_for('main.employee_dashboard') }}" class="btn btn-secondary mt-3">🔙 Back to Dashboard</a>
+<a href="{{ url_for('main.rent_room') }}" class="btn btn-outline-success mt-3">➕ New Rental</a>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ 'Add' if mode == 'add' else 'Edit' }} Room{% endblock %}
+
+{% block content %}
+<h2>{{ '➕ Add' if mode == 'add' else '✏️ Edit' }} Room</h2>
+
+<form method="POST">
+    <div class="mb-3">
+        <label class="form-label">Hotel ID</label>
+        <input type="number" name="hotel_id" class="form-control" value="{{ room.hotelid if room else '' }}" required>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Capacity</label>
+        <select name="capacity" class="form-select" required>
+            <option value="">Select...</option>
+            <option value="single" {% if room and room.capacity == 'single' %}selected{% endif %}>Single</option>
+            <option value="double" {% if room and room.capacity == 'double' %}selected{% endif %}>Double</option>
+            <option value="triple" {% if room and room.capacity == 'triple' %}selected{% endif %}>Triple</option>
+            <option value="family" {% if room and room.capacity == 'family' %}selected{% endif %}>Family</option>
+            <option value="suite" {% if room and room.capacity == 'suite' %}selected{% endif %}>Suite</option>
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">View Type</label>
+        <select name="viewtype" class="form-select" required>
+            <option value="">Select...</option>
+            <option value="none" {% if room and room.viewtype == 'none' %}selected{% endif %}>None</option>
+            <option value="ocean" {% if room and room.viewtype == 'mountain_view' %}selected{% endif %}>Mountain View</option>
+            <option value="city" {% if room and room.viewtype == 'sea_view' %}selected{% endif %}>Sea View</option>
+            <option value="garden" {% if room and room.viewtype == 'both' %}selected{% endif %}>Both</option>
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Extendable</label>
+        <select name="extendable" class="form-select" required>
+            <option value="">Select...</option>
+            <option value="true" {% if room and room.extendable == 't' %}selected{% endif %}>Yes</option>
+            <option value="false" {% if room and room.extendable == 'f' %}selected{% endif %}>No</option>
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Price</label>
+        <input type="number" name="price" class="form-control" value="{{ room.price if room else '' }}" required>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Status</label>
+        <select name="status" class="form-select" required>
+            <option value="">Select...</option>
+            <option value="Available" {% if room and room.status == 'Available' %}selected{% endif %}>Available</option>
+            <option value="Occupied" {% if room and room.status == 'Occupied' %}selected{% endif %}>Occupied</option>
+            <option value="Out-Of-Order" {% if room and room.status == 'Out-Of-Order' %}selected{% endif %}>Out-Of-Order</option>
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">{{ 'Add' if mode == 'add' else 'Update' }} Room</button>
+    <a href="{{ url_for('main.manage_rooms') }}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}

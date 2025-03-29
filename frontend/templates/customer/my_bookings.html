@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}My Bookings{% endblock %}
+
+{% block content %}
+<h2>📋 My Bookings</h2>
+
+{% if session.user_name %}
+<p>Welcome, <strong>{{ session.user_name }}</strong>!</p>
+{% endif %}
+
+{% if bookings %}
+<table class="table table-striped table-bordered">
+    <thead class="table-light">
+        <tr>
+            <th>Hotel</th>
+            <th>Address</th>
+            <th>Room ID</th>
+            <th>Check-In</th>
+            <th>Check-Out</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for b in bookings %}
+        <tr>
+            <td>{{ b.hotelname }}</td>
+            <td>{{ b.address }}</td>
+            <td>{{ b.roomid }}</td>
+            <td>{{ b.checkindate }}</td>
+            <td>{{ b.checkoutdate }}</td>
+            <td>{{ b.status }}</td>
+            <td>
+                {% if b.status != 'Cancelled' and b.checkindate > current_date %}
+                <form method="POST" action="{{ url_for('main.cancel_booking') }}" onsubmit="return confirm('Are you sure you want to cancel this booking?');">
+                    <input type="hidden" name="booking_id" value="{{ b.bookingid }}">
+                    <button class="btn btn-danger btn-sm" type="submit">Cancel</button>
+                </form>
+                {% else %}
+                <span class="text-muted">Not cancelable</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="alert alert-info">You have no bookings yet.</div>
+{% endif %}
+{% endblock %}

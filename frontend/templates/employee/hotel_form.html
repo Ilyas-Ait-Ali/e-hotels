@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Add' if mode == 'add' else 'Edit' }} Hotel{% endblock %}
+
+{% block content %}
+<h2>{{ '➕ Add' if mode == 'add' else '✏️ Edit' }} Hotel</h2>
+
+<form method="POST">
+    <div class="mb-3">
+        <label class="form-label">Hotel Name</label>
+        <input type="text" name="hotel_name" class="form-control" value="{{ hotel.HotelName if mode == 'edit' else '' }}" required>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Address</label>
+        <input type="text" name="address" class="form-control" value="{{ hotel.Address if mode == 'edit' else '' }}" required>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Hotel Chain</label>
+        <select name="hotel_chain_id" class="form-select" required>
+            <option value="">Select...</option>
+            {% for chain in hotel_chains %}
+                <option value="{{ chain[0] }}" {% if mode == 'edit' and chain[0] == hotel.HotelChainID %}selected{% endif %}>{{ chain[1] }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Category</label>
+        <select name="category" class="form-select" required>
+            <option value="">Select...</option>
+            <option value="Luxury" {% if mode == 'edit' and hotel.Category == 'Luxury' %}selected{% endif %}>Luxury</option>
+            <option value="Resort" {% if mode == 'edit' and hotel.Category == 'Resort' %}selected{% endif %}>Resort</option>
+            <option value="Boutique" {% if mode == 'edit' and hotel.Category == 'Boutique' %}selected{% endif %}>Boutique</option>
+        </select>
+    </div>
+    
+
+    <div class="mb-3">
+        <label class="form-label">Number of Rooms</label>
+        <input type="number" name="num_rooms" class="form-control" value="{{ hotel.Num_Rooms if mode == 'edit' else '' }}" required>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Rating</label>
+        <input type="number" name="rating" class="form-control" value="{{ hotel.Rating if mode == 'edit' else '' }}" required>
+    </div>
+
+    <button type="submit" class="btn btn-primary">{{ 'Add' if mode == 'add' else 'Update' }} Hotel</button>
+    <a href="{{ url_for('main.manage_hotels') }}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}

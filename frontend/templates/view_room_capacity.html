@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block title %}Total Capacity per Hotel{% endblock %}
+{% block content %}
+<h2>🏨 Total Room Capacity per Hotel</h2>
+
+{% if rows %}
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Hotel</th>
+            <th>Total Capacity</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in rows %}
+        <tr>
+            <td>{{ row.hotelname }}</td>
+            <td>{{ row.totalcapacity }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No data available.</p>
+{% endif %}
+{% endblock %}
