@@ -106,7 +106,7 @@ DO $$
 DECLARE
     hotel_rec RECORD;
     emp_count INTEGER := 0;
-    roles TEXT[] := ARRAY['Manager', 'Receptionist', 'Housekeeper'];
+    roles TEXT[] := ARRAY['Manager', 'Receptionist', 'Receptionist'];
     first_names TEXT[] := ARRAY[
         'Alice', 'Bob', 'Cathy', 'Daniel', 'Eva', 'Frank', 'Grace', 'Hank', 'Ivy',
         'Jack', 'Karen', 'Leo', 'Mona', 'Nina', 'Oscar', 'Paul', 'Quinn', 'Rachel',
