@@ -135,12 +135,12 @@ CREATE TABLE Rental (
     CheckOutDate DATE NOT NULL,
     Status VARCHAR(20) NOT NULL,
     PaymentAmount DECIMAL(10, 2) NOT NULL,
-    PaymentDate DATE,
-    PaymentMethod VARCHAR(50),
+    PaymentDate DATE NOT NULL,
+    PaymentMethod VARCHAR(50) NOT NULL,
     FOREIGN KEY (CustomerID) REFERENCES Customer(CustomerID) ON DELETE CASCADE,
     FOREIGN KEY (HotelID, RoomID) REFERENCES Room(HotelID, RoomID) ON DELETE CASCADE,
     FOREIGN KEY (EmployeeID) REFERENCES Employee(EmployeeID) ON DELETE SET NULL,
-    FOREIGN KEY (BookingID) REFERENCES Booking(BookingID) ON DELETE CASCADE
+    FOREIGN KEY (BookingID) REFERENCES Booking(BookingID) ON DELETE SET NULL
 );
 
 -- Booking Archive Table
