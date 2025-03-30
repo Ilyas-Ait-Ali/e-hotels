@@ -31,13 +31,11 @@
             <td>{{ b.checkoutdate }}</td>
             <td>
                 {% if b.status == 'Pending' %}
-                    <span class="badge bg-warning text-dark">🕓 Pending</span>
-                {% elif b.status == 'Confirmed' %}
-                    <span class="badge bg-success">✅ Confirmed</span>
+                    <span class="badge bg-warning text-dark">Pending</span>
+                {% elif b.status == 'Checked-in' %}
+                    <span class="badge bg-success">Checked-in</span>
                 {% elif b.status == 'Cancelled' %}
-                    <span class="badge bg-secondary">❌ Cancelled</span>
-                {% else %}
-                    <span class="badge bg-dark">Unknown</span>
+                    <span class="badge bg-secondary">Cancelled</span>
                 {% endif %}
             </td>
             <td>
