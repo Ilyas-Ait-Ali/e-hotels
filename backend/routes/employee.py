@@ -7,7 +7,7 @@ bp_employee = Blueprint('employee', __name__)
 
 @bp_employee.route('/employee/dashboard')
 def employee_dashboard():
-    if 'user_type' not in session or session['user_type'] != 'employee' or session.get('user_position') == 'Housekeeper':
+    if 'user_type' not in session or session['user_type'] != 'employee':
         return redirect(url_for('auth.login'))
 
     results = db.session.execute(text("""
@@ -28,7 +28,7 @@ def employee_dashboard():
 
 @bp_employee.route('/employee/convert-booking', methods=['POST'])
 def convert_booking():
-    if 'user_type' not in session or session['user_type'] != 'employee' or session.get('user_position') == 'Housekeeper':
+    if 'user_type' not in session or session['user_type'] != 'employee':
         flash("You must be logged in as an employee.")
         return redirect(url_for('auth.login'))
 
@@ -83,7 +83,7 @@ def convert_booking():
 
 @bp_employee.route('/employee/rent-room', methods=['GET', 'POST'])
 def rent_room():
-    if 'user_type' not in session or session['user_type'] != 'employee' or session.get('user_position') == 'Housekeeper':
+    if 'user_type' not in session or session['user_type'] != 'employee':
         flash("You must be logged in as an employee.")
         return redirect(url_for('auth.login'))
 
@@ -156,12 +156,29 @@ def rent_room():
 def manage_customers():
     if 'user_type' not in session or session['user_type'] != 'employee':
         return redirect(url_for('auth.login'))
-    if session.get('position') != 'Manager':
-        flash("Access denied: Only Managers can manage customers.")
+
+    position = session.get('position')
+    hotel_id = session.get('hotel_id')
+
+    if position == 'Admin':
+        customers = db.session.execute(text("""
+            SELECT * FROM Customer ORDER BY FullName
+        """)).fetchall()
+    elif position == 'Manager':
+        customers = db.session.execute(text("""
+            SELECT DISTINCT c.*
+            FROM Customer c
+            LEFT JOIN Booking b ON c.CustomerID = b.CustomerID
+            LEFT JOIN Rental r ON c.CustomerID = r.CustomerID
+            WHERE b.HotelID = :hotel_id OR r.HotelID = :hotel_id
+            ORDER BY c.FullName
+        """), {'hotel_id': hotel_id}).fetchall()
+    else:
+        flash("❌ Access denied.")
         return redirect(url_for('employee.employee_dashboard'))
 
-    customers = db.session.execute(text("SELECT * FROM Customer ORDER BY FullName")).fetchall()
     return render_template("employee/customers.html", customers=customers)
+
 
 
 
@@ -169,6 +186,10 @@ def manage_customers():
 def add_customer():
     if 'user_type' not in session or session['user_type'] != 'employee':
         return redirect(url_for('auth.login'))
+
+    if session.get('position') not in ['Admin', 'Manager']:
+        flash("❌ Access denied.")
+        return redirect(url_for('employee.employee_dashboard'))
 
     if request.method == 'POST':
         full_name = request.form['full_name']
@@ -197,6 +218,7 @@ def add_customer():
 
     return render_template("employee/customer_form.html", customer=None)
 
+
 @bp_employee.route('/employee/customers/edit/<int:customer_id>', methods=['GET', 'POST'])
 def edit_customer(customer_id):
     if 'user_type' not in session or session['user_type'] != 'employee':
@@ -209,6 +231,21 @@ def edit_customer(customer_id):
     if not customer:
         flash("❌ Customer not found.")
         return redirect(url_for('employee.manage_customers'))
+
+    # Manager permission check
+    if session.get('position') == 'Manager':
+        access = db.session.execute(text("""
+            SELECT 1
+            FROM Booking WHERE CustomerID = :cid AND HotelID = :hid
+            UNION
+            SELECT 1
+            FROM Rental WHERE CustomerID = :cid AND HotelID = :hid
+            LIMIT 1
+        """), {'cid': customer_id, 'hid': session['hotel_id']}).fetchone()
+
+        if not access:
+            flash("❌ You do not have permission to edit this customer.")
+            return redirect(url_for('employee.manage_customers'))
 
     if request.method == 'POST':
         full_name = request.form['full_name']
@@ -240,10 +277,27 @@ def edit_customer(customer_id):
 
     return render_template("employee/customer_form.html", customer=customer)
 
+
+
 @bp_employee.route('/employee/customers/delete/<int:customer_id>', methods=['POST'])
 def delete_customer(customer_id):
     if 'user_type' not in session or session['user_type'] != 'employee':
         return redirect(url_for('auth.login'))
+
+    # Manager permission check
+    if session.get('position') == 'Manager':
+        access = db.session.execute(text("""
+            SELECT 1
+            FROM Booking WHERE CustomerID = :cid AND HotelID = :hid
+            UNION
+            SELECT 1
+            FROM Rental WHERE CustomerID = :cid AND HotelID = :hid
+            LIMIT 1
+        """), {'cid': customer_id, 'hid': session['hotel_id']}).fetchone()
+
+        if not access:
+            flash("❌ You do not have permission to delete this customer.")
+            return redirect(url_for('employee.manage_customers'))
 
     try:
         db.session.execute(text("DELETE FROM Customer WHERE CustomerID = :cid"), {'cid': customer_id})
@@ -260,39 +314,73 @@ def delete_customer(customer_id):
 
 @bp_employee.route('/employee/employees')
 def manage_employees():
-    if 'user_type' not in session or session['user_type'] != 'employee' or session.get('position') != 'Manager':
+    if 'user_type' not in session or session['user_type'] != 'employee':
         return redirect(url_for('auth.login'))
 
-    employees = db.session.execute(text("""
-        SELECT EmployeeID, FullName, Address, Position, SSN, HotelID
-        FROM Employee
-        ORDER BY FullName
-    """)).fetchall()
+    position = session.get('position')
+    hotel_id = session.get('hotel_id')
+
+    if position == 'Admin':
+        employees = db.session.execute(text("""
+            SELECT EmployeeID, FullName, Address, Position, SSN, HotelID
+            FROM Employee
+            ORDER BY FullName
+        """)).fetchall()
+
+    elif position == 'Manager':
+        employees = db.session.execute(text("""
+            SELECT EmployeeID, FullName, Address, Position, SSN, HotelID
+            FROM Employee
+            WHERE HotelID = :hid
+            ORDER BY FullName
+        """), {'hid': hotel_id}).fetchall()
+
+    else:
+        flash("❌ Access denied.")
+        return redirect(url_for('employee.employee_dashboard'))
 
     return render_template("employee/employees.html", employees=employees)
 
+
+
 @bp_employee.route('/employee/employees/add', methods=['GET', 'POST'])
 def add_employee():
-    if 'user_type' not in session or session['user_type'] != 'employee' or session.get('position') != 'Manager':
+    if 'user_type' not in session or session['user_type'] != 'employee':
         return redirect(url_for('auth.login'))
 
-    if request.method == 'POST':
-        try:
-            name = request.form.get("name")
-            addr = request.form.get("addr")
-            pos = request.form.get("pos")
-            ssn = request.form.get("ssn")
-            hid = request.form.get("hid")
+    position = session.get('position')
+    hotel_id = session.get('hotel_id')
 
+    if position not in ['Admin', 'Manager']:
+        flash("❌ Access denied.")
+        return redirect(url_for('employee.employee_dashboard'))
+
+    if request.method == 'POST':
+        fullname = request.form.get("fullname")
+        address = request.form.get("address")
+        emp_position = request.form.get("position")
+        ssn = request.form.get("ssn")
+        emp_hotel_id = int(request.form.get("hotel_id"))
+
+        
+        if position == 'Manager':
+            if emp_position in ['Admin', 'Manager']:
+                flash("❌ You cannot assign Admin or Manager positions.")
+                return redirect(url_for('employee.add_employee'))
+            if emp_hotel_id != hotel_id:
+                flash("❌ You can only assign employees to your own hotel.")
+                return redirect(url_for('employee.add_employee'))
+
+        try:
             db.session.execute(text("""
                 INSERT INTO Employee (FullName, Address, Position, SSN, HotelID)
                 VALUES (:name, :addr, :pos, :ssn, :hid)
             """), {
-                "name": name,
-                "addr": addr,
-                "pos": pos,
+                "name": fullname,
+                "addr": address,
+                "pos": emp_position,
                 "ssn": ssn,
-                "hid": hid
+                "hid": emp_hotel_id
             })
 
             db.session.commit()
@@ -302,15 +390,18 @@ def add_employee():
         except Exception as e:
             db.session.rollback()
             flash(f"❌ Failed to add employee: {e}")
-            return redirect(url_for('employee.add_employee'))
 
     return render_template("employee/employee_form.html", mode="add", employee=None)
 
+
+
 @bp_employee.route('/employee/employees/edit/<int:employee_id>', methods=['GET', 'POST'])
 def edit_employee(employee_id):
-    if 'user_type' not in session or session['user_type'] != 'employee' or session.get('position') != 'Manager':
-        flash("Only managers can edit employees.")
+    if 'user_type' not in session or session['user_type'] != 'employee':
         return redirect(url_for('auth.login'))
+
+    position = session.get('position')
+    hotel_id = session.get('hotel_id')
 
     employee = db.session.execute(
         text("SELECT * FROM Employee WHERE EmployeeID = :eid"),
@@ -320,19 +411,39 @@ def edit_employee(employee_id):
     if not employee:
         flash("❌ Employee not found.")
         return redirect(url_for('employee.manage_employees'))
+    
+    if position == 'Admin' and employee.employeeid == session['user_id']:
+        flash("⚠️ You cannot edit your own account.")
+        return redirect(url_for('employee.manage_employees'))
+    elif position == 'Manager' and employee.employeeid == session['user_id']:
+        flash("⚠️ You cannot edit your own account.")
+        return redirect(url_for('employee.manage_employees'))
+
+
+
+    if position == 'Manager':
+        if employee.hotelid != hotel_id or employee.position in ['Admin', 'Manager']:
+            flash("❌ You do not have permission to edit this employee.")
+            return redirect(url_for('employee.manage_employees'))
 
     if request.method == 'POST':
-        fullname = request.form.get('fullname', '')
-        address = request.form.get('address', '')
-        position = request.form.get('position', '')
-        ssn = request.form.get('ssn', '')
-        hotel_id = request.form.get('hotel_id', '')
+        fullname = request.form.get('fullname')
+        address = request.form.get('address')
+        emp_position = request.form.get('position')
+        ssn = request.form.get('ssn')
+        emp_hotel_id = int(request.form.get('hotel_id'))
 
-
-        if not all([fullname, address, position, ssn, hotel_id]):
+        if not all([fullname, address, emp_position, ssn, emp_hotel_id]):
             flash("❌ All fields are required.")
             return redirect(url_for('employee.edit_employee', employee_id=employee_id))
 
+        if position == 'Manager':
+            if emp_position in ['Admin', 'Manager']:
+                flash("❌ You cannot assign Admin or Manager roles.")
+                return redirect(url_for('employee.edit_employee', employee_id=employee_id))
+            if emp_hotel_id != hotel_id:
+                flash("❌ You can only assign employees to your own hotel.")
+                return redirect(url_for('employee.edit_employee', employee_id=employee_id))
 
         try:
             db.session.execute(text("""
@@ -346,9 +457,9 @@ def edit_employee(employee_id):
             """), {
                 'name': fullname,
                 'addr': address,
-                'pos': position,
+                'pos': emp_position,
                 'ssn': ssn,
-                'hid': hotel_id,
+                'hid': emp_hotel_id,
                 'eid': employee_id
             })
             db.session.commit()
@@ -361,11 +472,40 @@ def edit_employee(employee_id):
 
     return render_template("employee/employee_form.html", mode='edit', employee=employee)
 
+
+
 @bp_employee.route('/employee/employees/delete/<int:employee_id>', methods=['POST'])
 def delete_employee(employee_id):
-    if 'user_type' not in session or session['user_type'] != 'employee' or session.get('position') != 'Manager':
-        flash("Only managers can delete employees.")
+    if 'user_type' not in session or session['user_type'] != 'employee':
         return redirect(url_for('auth.login'))
+
+    position = session.get('position')
+    hotel_id = session.get('hotel_id')
+
+    employee = db.session.execute(
+        text("SELECT * FROM Employee WHERE EmployeeID = :eid"),
+        {'eid': employee_id}
+    ).fetchone()
+
+    if not employee:
+        flash("❌ Employee not found.")
+        return redirect(url_for('employee.manage_employees'))
+
+    if position == 'Admin' and employee.employeeid == session['user_id']:
+        flash("⚠️ You cannot delete your own account.")
+        return redirect(url_for('employee.manage_employees'))
+
+    elif position == 'Manager' and employee.employeeid == session['user_id']:
+        flash("⚠️ You cannot delete your own account.")
+        return redirect(url_for('employee.manage_employees'))
+    
+
+
+    # Manager restrictions
+    if position == 'Manager':
+        if employee.hotelid != hotel_id or employee.position in ['Admin', 'Manager']:
+            flash("❌ You do not have permission to delete this employee.")
+            return redirect(url_for('employee.manage_employees'))
 
     try:
         db.session.execute(text("DELETE FROM Employee WHERE EmployeeID = :eid"), {'eid': employee_id})
@@ -380,20 +520,24 @@ def delete_employee(employee_id):
 
 
 
+
 @bp_employee.route('/employee/hotels')
 def manage_hotels():
-    if 'user_type' not in session or session['user_type'] != 'employee' or session.get('position') != 'Manager':
-        flash("Only managers can access hotel management.")
+    if 'user_type' not in session or session['user_type'] != 'employee' or session.get('position') != 'Admin':
+        flash("❌ Only admins can access hotel management.")
         return redirect(url_for('auth.login'))
 
     hotels = db.session.execute(text("SELECT * FROM Hotel ORDER BY HotelName")).fetchall()
     return render_template("employee/hotels.html", hotels=hotels)
 
+
 @bp_employee.route('/employee/hotels/add', methods=['GET', 'POST'])
 def add_hotel():
-    
-    hotel_chains = db.session.execute(text("SELECT HotelChainID, ChainName FROM HotelChain")).fetchall()
+    if 'user_type' not in session or session['user_type'] != 'employee' or session.get('position') != 'Admin':
+        flash("❌ Only admins can add hotels.")
+        return redirect(url_for('auth.login'))
 
+    hotel_chains = db.session.execute(text("SELECT HotelChainID, ChainName FROM HotelChain")).fetchall()
 
     if request.method == 'POST':
         hotel_name = request.form.get('hotel_name')
@@ -404,7 +548,6 @@ def add_hotel():
         rating = request.form.get('rating')
 
         try:
-            
             db.session.execute(text("""
                 INSERT INTO Hotel (HotelName, Address, HotelChainID, Category, Num_Rooms, Rating)
                 VALUES (:hotel_name, :address, :hotel_chain_id, :category, :num_rooms, :rating)
@@ -426,10 +569,11 @@ def add_hotel():
 
     return render_template("employee/hotel_form.html", mode="add", hotel_chains=hotel_chains)
 
+
 @bp_employee.route('/employee/hotels/edit/<int:hotel_id>', methods=['GET', 'POST'])
 def edit_hotel(hotel_id):
-    if 'user_type' not in session or session['user_type'] != 'employee' or session.get('position') != 'Manager':
-        flash("Only managers can edit hotels.")
+    if 'user_type' not in session or session['user_type'] != 'employee' or session.get('position') != 'Admin':
+        flash("❌ Only admins can edit hotels.")
         return redirect(url_for('auth.login'))
 
     hotel = db.session.execute(text("SELECT * FROM Hotel WHERE HotelID = :hid"), {'hid': hotel_id}).fetchone()
@@ -437,6 +581,8 @@ def edit_hotel(hotel_id):
     if not hotel:
         flash("❌ Hotel not found.")
         return redirect(url_for('employee.manage_hotels'))
+
+    hotel_chains = db.session.execute(text("SELECT HotelChainID, ChainName FROM HotelChain")).fetchall()
 
     if request.method == 'POST':
         hotel_name = request.form.get('hotel_name')
@@ -472,15 +618,16 @@ def edit_hotel(hotel_id):
             db.session.rollback()
             flash(f"❌ Failed to update hotel: {e}")
 
-    return render_template("employee/hotel_form.html", mode='edit', hotel=hotel)
+    return render_template("employee/hotel_form.html", mode='edit', hotel=hotel, hotel_chains=hotel_chains)
+
+
 
 @bp_employee.route('/employee/hotels/delete/<int:hotel_id>', methods=['POST'])
 def delete_hotel(hotel_id):
-    if 'user_type' not in session or session['user_type'] != 'employee' or session.get('position') != 'Manager':
-        flash("Only managers can delete hotels.")
+    if 'user_type' not in session or session['user_type'] != 'employee' or session.get('position') != 'Admin':
+        flash("❌ Only admins can delete hotels.")
         return redirect(url_for('auth.login'))
 
-    
     bookings = db.session.execute(text("""
         SELECT 1 FROM Booking WHERE HotelID = :hid LIMIT 1
     """), {'hid': hotel_id}).fetchone()
@@ -499,26 +646,47 @@ def delete_hotel(hotel_id):
 
     return redirect(url_for('employee.manage_hotels'))
 
+
 @bp_employee.route('/employee/rooms')
 def manage_rooms():
-    if 'user_type' not in session or session['user_type'] != 'employee' or session.get('position') != 'Manager':
-        flash("Only managers can view rooms.")
+    if 'user_type' not in session or session['user_type'] != 'employee':
         return redirect(url_for('auth.login'))
 
-    rooms = db.session.execute(text("SELECT * FROM Room ORDER BY RoomID")).fetchall()
+    position = session.get('position')
+    hotel_id = session.get('hotel_id')
+
+    if position == 'Admin':
+        rooms = db.session.execute(text("SELECT * FROM Room ORDER BY HotelID, RoomID")).fetchall()
+    elif position == 'Manager':
+        rooms = db.session.execute(text("SELECT * FROM Room WHERE HotelID = :hid ORDER BY RoomID"), {'hid': hotel_id}).fetchall()
+    else:
+        flash("❌ Access denied.")
+        return redirect(url_for('employee.employee_dashboard'))
+
     return render_template("employee/rooms.html", rooms=rooms)
+
 
 @bp_employee.route('/employee/rooms/add', methods=['GET', 'POST'])
 def add_room():
-    if 'user_type' not in session or session['user_type'] != 'employee' or session.get('position') != 'Manager':
-        flash("Only managers can add rooms.")
+    if 'user_type' not in session or session['user_type'] != 'employee':
         return redirect(url_for('auth.login'))
 
+    position = session.get('position')
+    hotel_id = session.get('hotel_id')
+
+    if position not in ['Admin', 'Manager']:
+        flash("❌ Access denied.")
+        return redirect(url_for('employee.employee_dashboard'))
+
     if request.method == 'POST':
-        hotel_id = request.form.get('hotel_id')
+        hotel_id_input = int(request.form.get('hotel_id'))
+        if position == 'Manager' and hotel_id_input != hotel_id:
+            flash("❌ You can only add rooms to your own hotel.")
+            return redirect(url_for('employee.add_room'))
+
         capacity = request.form.get('capacity')
         viewtype = request.form.get('viewtype')
-        extendable = request.form.get('extendable')
+        extendable = request.form.get('extendable') == 'true'
         price = request.form.get('price')
         status = request.form.get('status')
 
@@ -527,7 +695,7 @@ def add_room():
                 INSERT INTO Room (HotelID, Capacity, ViewType, Extendable, Price, Status)
                 VALUES (:hotel_id, :capacity, :viewtype, :extendable, :price, :status)
             """), {
-                'hotel_id': hotel_id,
+                'hotel_id': hotel_id_input,
                 'capacity': capacity,
                 'viewtype': viewtype,
                 'extendable': extendable,
@@ -547,21 +715,30 @@ def add_room():
 
 @bp_employee.route('/employee/rooms/edit/<int:room_id>', methods=['GET', 'POST'])
 def edit_room(room_id):
-    if 'user_type' not in session or session['user_type'] != 'employee' or session.get('position') != 'Manager':
-        flash("Only managers can edit rooms.")
+    if 'user_type' not in session or session['user_type'] != 'employee':
         return redirect(url_for('auth.login'))
 
-    room = db.session.execute(text("SELECT * FROM Room WHERE RoomID = :rid"), {'rid': room_id}).fetchone()
+    position = session.get('position')
+    hotel_id = session.get('hotel_id')
 
+    room = db.session.execute(text("SELECT * FROM Room WHERE RoomID = :rid"), {'rid': room_id}).fetchone()
     if not room:
         flash("❌ Room not found.")
         return redirect(url_for('employee.manage_rooms'))
 
+    if position == 'Manager' and room.hotelid != hotel_id:
+        flash("❌ You can only edit rooms from your own hotel.")
+        return redirect(url_for('employee.manage_rooms'))
+
     if request.method == 'POST':
-        hotel_id = request.form.get('hotel_id')
+        hotel_id_input = int(request.form.get('hotel_id'))
+        if position == 'Manager' and hotel_id_input != hotel_id:
+            flash("❌ You cannot reassign a room to another hotel.")
+            return redirect(url_for('employee.edit_room', room_id=room_id))
+
         capacity = request.form.get('capacity')
         viewtype = request.form.get('viewtype')
-        extendable = request.form.get('extendable')
+        extendable = request.form.get('extendable') == 'true'
         price = request.form.get('price')
         status = request.form.get('status')
 
@@ -576,7 +753,7 @@ def edit_room(room_id):
                     Status = :status
                 WHERE RoomID = :rid
             """), {
-                'hotel_id': hotel_id,
+                'hotel_id': hotel_id_input,
                 'capacity': capacity,
                 'viewtype': viewtype,
                 'extendable': extendable,
@@ -593,6 +770,7 @@ def edit_room(room_id):
             flash(f"❌ Failed to update room: {e}")
 
     return render_template("employee/room_form.html", mode='edit', room=room)
+
 
 
 @bp_employee.route('/employee/rooms/delete/<int:room_id>', methods=['POST'])
