@@ -12,13 +12,18 @@ def employee_dashboard():
 
     results = db.session.execute(text("""
         SELECT b.BookingID, b.CheckInDate, b.CheckOutDate, b.Status,
-               b.RoomID, h.HotelName, c.FullName AS CustomerName
+            b.RoomID, h.HotelName, c.FullName AS CustomerName
         FROM Booking b
         JOIN Hotel h ON b.HotelID = h.HotelID
         JOIN Customer c ON b.CustomerID = c.CustomerID
-        WHERE b.Status = 'Confirmed' AND b.CheckInDate >= CURRENT_DATE
+        WHERE b.Status IN ('Pending', 'Confirmed')
+        AND b.CheckInDate >= CURRENT_DATE
+        AND NOT EXISTS (
+            SELECT 1 FROM Rental r WHERE r.BookingID = b.BookingID
+        )
         ORDER BY b.CheckInDate
     """)).fetchall()
+
 
     return render_template("employee/dashboard.html", bookings=results)
 
@@ -46,7 +51,7 @@ def convert_booking():
 
         
         db.session.execute(text("""
-            UPDATE Booking SET Status = 'Cancelled' WHERE BookingID = :bid
+            UPDATE Booking SET Status = 'Confirmed' WHERE BookingID = :bid
         """), {'bid': booking_id})
 
         

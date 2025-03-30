@@ -23,7 +23,13 @@ def login():
             result = db.session.execute(query, {'name': full_name}).fetchone()
             if not result:
                 return render_template('login.html', error="Customer not found")
+
             session['user_id'] = result[0]
+            session['user_type'] = 'customer'
+            session['user_name'] = full_name  
+
+            return redirect(url_for('customer.my_bookings'))
+
 
         else: 
             query = text("SELECT EmployeeID, Position, HotelID FROM Employee WHERE FullName = :name")
@@ -36,7 +42,6 @@ def login():
             session['user_type'] = user_type
             session['user_name'] = full_name
 
-            # Store hotel_id for managers
             if result[1] == 'Manager':
                 session['hotel_id'] = result[2]
 

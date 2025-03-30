@@ -85,10 +85,14 @@ def my_bookings():
         FROM Booking b
         JOIN Hotel h ON b.HotelID = h.HotelID
         WHERE b.CustomerID = :cid
-        ORDER BY b.CheckInDate DESC
+        ORDER BY 
+            CASE WHEN b.Status = 'Cancelled' THEN 1 ELSE 0 END,
+            b.CheckInDate
     """), {'cid': customer_id}).fetchall()
 
     return render_template("customer/my_bookings.html", bookings=bookings, current_date=date.today())
+
+
 
 @bp_customer.route('/customer/book', methods=['POST'])
 def book_room():
@@ -107,7 +111,7 @@ def book_room():
         
         db.session.execute(text("""
             INSERT INTO Booking (CustomerID, HotelID, RoomID, BookingDate, CheckInDate, CheckOutDate, Status)
-            VALUES (:cid, :hid, :rid, :bdate, :checkin, :checkout, 'Confirmed')
+            VALUES (:cid, :hid, :rid, :bdate, :checkin, :checkout, 'Pending')
         """), {
             'cid': customer_id,
             'hid': hotel_id,
