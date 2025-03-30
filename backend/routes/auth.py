@@ -12,27 +12,28 @@ def home():
 @bp_auth.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        full_name = request.form['full_name'].strip()
+        full_name_input = request.form['full_name'].strip()
+        full_name = full_name_input.lower()
         user_type = request.form['user_type']
 
         if not full_name or user_type not in ['customer', 'employee']:
             return render_template('login.html', error="Invalid input")
 
         if user_type == 'customer':
-            query = text("SELECT CustomerID FROM Customer WHERE FullName = :name")
+            query = text("SELECT CustomerID, FullName FROM Customer WHERE LOWER(FullName) = :name")
             result = db.session.execute(query, {'name': full_name}).fetchone()
             if not result:
                 return render_template('login.html', error="Customer not found")
 
             session['user_id'] = result[0]
             session['user_type'] = 'customer'
-            session['user_name'] = full_name  
+            session['user_name'] = result[1]
 
             return redirect(url_for('customer.my_bookings'))
 
 
         else: 
-            query = text("SELECT EmployeeID, Position, HotelID FROM Employee WHERE FullName = :name")
+            query = text("SELECT EmployeeID, Position, HotelID, FullName FROM Employee WHERE LOWER(FullName) = :name")
             result = db.session.execute(query, {'name': full_name}).fetchone()
             if not result:
                 return render_template('login.html', error="Employee not found")
@@ -40,7 +41,7 @@ def login():
             session['user_id'] = result[0]
             session['position'] = result[1]
             session['user_type'] = user_type
-            session['user_name'] = full_name
+            session['user_name'] = result[3]
 
             if result[1] == 'Manager':
                 session['hotel_id'] = result[2]
