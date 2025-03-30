@@ -28,12 +28,23 @@
         </select>
     </div>
     <div class="col-md-2">
+        <label class="form-label">View Type</label>
+        <select class="form-select" name="viewtype">
+            <option value="">Any</option>
+            {% for view in ['sea_view', 'mountain_view', 'both', 'none'] %}
+                <option value="{{ view }}" {% if request.args.viewtype == view %}selected{% endif %}>
+                    {{ view.replace('_', ' ').capitalize() }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-2">
         <label class="form-label">Hotel Area</label>
         <input type="text" class="form-control" name="area" placeholder="e.g. Seattle" value="{{ request.args.area }}">
     </div>
     <div class="col-md-2">
         <label class="form-label">Hotel Chain</label>
-        <input type="text" class="form-control" name="chain" placeholder="e.g. Marriott" value="{{ request.args.chain }}">
+        <input type="text" class="form-control" name="chain" placeholder="e.g. Grand Resorts" value="{{ request.args.chain }}">
     </div>
     <div class="col-md-2">
         <label class="form-label">Category</label>
@@ -46,22 +57,15 @@
     </div>
     <div class="col-md-2">
         <label class="form-label">Max Price ($)</label>
-        <input type="number" class="form-control" name="price" value="{{ request.args.price }}">
+        <input type="number" class="form-control" name="price" min="0" value="{{ request.args.price }}">
     </div>
-    <div class="col-md-2">
-        <label class="form-label">Min # Rooms</label>
-        <input type="number" class="form-control" name="minrooms" value="{{ request.args.minrooms }}">
-    </div>
-    <div class="col-md-12 text-end">
+    <div class="col-md-12 text-end d-flex justify-content-end gap-2">
         <button type="submit" class="btn btn-primary">Search</button>
+        <a href="{{ url_for('customer.search_rooms') }}" class="btn btn-outline-secondary">Reset</a>
     </div>
 </form>
 
 {% if rooms %}
-<p class="text-muted">
-    ⚠ Rooms with unresolved problems are shown but <strong>cannot be booked</strong>.<br>
-</p>
-
 <h4>Results:</h4>
 <table class="table table-striped table-bordered">
     <thead class="table-light">
@@ -112,3 +116,4 @@
 <div class="alert alert-warning">No rooms match your criteria.</div>
 {% endif %}
 {% endblock %}
+
