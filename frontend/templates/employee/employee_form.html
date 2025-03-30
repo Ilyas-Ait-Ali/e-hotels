@@ -19,9 +19,15 @@
         <label class="form-label">Position</label>
         <select name="position" class="form-select" required>
             <option value="">Select...</option>
-            {% for role in ['Manager', 'Receptionist', 'Housekeeper'] %}
-                <option value="{{ role }}" {% if employee and employee.position == role %}selected{% endif %}>{{ role }}</option>
-            {% endfor %}
+            {% if session['position'] == 'Admin' %}
+                {% for role in ['Admin', 'Manager', 'Receptionist', 'Housekeeper'] %}
+                    <option value="{{ role }}" {% if employee and employee.position == role %}selected{% endif %}>{{ role }}</option>
+                {% endfor %}
+            {% else %}
+                {% for role in ['Receptionist', 'Housekeeper'] %}
+                    <option value="{{ role }}" {% if employee and employee.position == role %}selected{% endif %}>{{ role }}</option>
+                {% endfor %}
+            {% endif %}
         </select>
     </div>
 
@@ -30,10 +36,14 @@
         <input type="text" name="ssn" class="form-control" value="{{ employee.ssn if employee else '' }}" required>
     </div>
 
-    <div class="mb-3">
-        <label class="form-label">Hotel ID</label>
-        <input type="number" name="hotel_id" class="form-control" value="{{ employee.hotelid if employee else '' }}" required>
-    </div>
+    {% if session['position'] == 'Admin' %}
+        <div class="mb-3">
+            <label class="form-label">Hotel ID</label>
+            <input type="number" name="hotel_id" class="form-control" value="{{ employee.hotelid if employee else '' }}" required>
+        </div>
+    {% else %}
+        <input type="hidden" name="hotel_id" value="{{ session['hotel_id'] }}">
+    {% endif %}
 
     <button type="submit" class="btn btn-primary">{{ 'Add' if mode == 'add' else 'Update' }} Employee</button>
     <a href="{{ url_for('employee.manage_employees') }}" class="btn btn-secondary">Cancel</a>

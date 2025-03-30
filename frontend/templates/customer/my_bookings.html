@@ -9,7 +9,7 @@
 {% endif %}
 
 {% if bookings %}
-<table class="table table-striped table-bordered">
+<table class="table table-striped table-bordered align-middle">
     <thead class="table-light">
         <tr>
             <th>Hotel</th>
@@ -29,7 +29,17 @@
             <td>{{ b.roomid }}</td>
             <td>{{ b.checkindate }}</td>
             <td>{{ b.checkoutdate }}</td>
-            <td>{{ b.status }}</td>
+            <td>
+                {% if b.status == 'Pending' %}
+                    <span class="badge bg-warning text-dark">🕓 Pending</span>
+                {% elif b.status == 'Confirmed' %}
+                    <span class="badge bg-success">✅ Confirmed</span>
+                {% elif b.status == 'Cancelled' %}
+                    <span class="badge bg-secondary">❌ Cancelled</span>
+                {% else %}
+                    <span class="badge bg-dark">Unknown</span>
+                {% endif %}
+            </td>
             <td>
                 {% if b.status != 'Cancelled' and b.checkindate > current_date %}
                 <form method="POST" action="{{ url_for('customer.cancel_booking') }}" onsubmit="return confirm('Are you sure you want to cancel this booking?');">

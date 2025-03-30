@@ -23,18 +23,27 @@ def login():
             result = db.session.execute(query, {'name': full_name}).fetchone()
             if not result:
                 return render_template('login.html', error="Customer not found")
+
             session['user_id'] = result[0]
+            session['user_type'] = 'customer'
+            session['user_name'] = full_name  
+
+            return redirect(url_for('customer.my_bookings'))
+
 
         else: 
-            query = text("SELECT EmployeeID, Position FROM Employee WHERE FullName = :name")
+            query = text("SELECT EmployeeID, Position, HotelID FROM Employee WHERE FullName = :name")
             result = db.session.execute(query, {'name': full_name}).fetchone()
             if not result:
                 return render_template('login.html', error="Employee not found")
-            session['user_id'] = result[0]
-            session['position'] = result[1] 
 
-        session['user_type'] = user_type
-        session['user_name'] = full_name
+            session['user_id'] = result[0]
+            session['position'] = result[1]
+            session['user_type'] = user_type
+            session['user_name'] = full_name
+
+            if result[1] == 'Manager':
+                session['hotel_id'] = result[2]
 
         if user_type == 'customer':
             return redirect(url_for('customer.my_bookings'))
@@ -43,9 +52,7 @@ def login():
 
     return render_template('login.html')
 
-
 @bp_auth.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('auth.login'))
-

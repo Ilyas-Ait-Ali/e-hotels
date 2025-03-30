@@ -52,7 +52,16 @@ def search_rooms():
         params["minrooms"] = request.args["minrooms"]
 
     query = f"""
-        SELECT r.*, h.HotelName, h.Address, hc.ChainName, h.Rating
+        SELECT r.*, h.HotelName, h.Address, hc.ChainName, h.Rating,
+            EXISTS (
+                SELECT 1 FROM RoomProblems p
+                WHERE p.HotelID = r.HotelID AND p.RoomID = r.RoomID AND p.Resolved = FALSE
+            ) AS has_problem,
+            (
+                SELECT string_agg(ra.Amenity, ', ')
+                FROM RoomAmenities ra
+                WHERE ra.HotelID = r.HotelID AND ra.RoomID = r.RoomID
+            ) AS amenities
         FROM Room r
         JOIN Hotel h ON r.HotelID = h.HotelID
         JOIN HotelChain hc ON h.HotelChainID = hc.HotelChainID
@@ -71,6 +80,8 @@ def search_rooms():
         ORDER BY r.Price
     """
 
+
+
     results = db.session.execute(text(query), params).fetchall()
     return render_template("customer/search.html", rooms=results, checkin=checkin, checkout=checkout)
 
@@ -85,10 +96,14 @@ def my_bookings():
         FROM Booking b
         JOIN Hotel h ON b.HotelID = h.HotelID
         WHERE b.CustomerID = :cid
-        ORDER BY b.CheckInDate DESC
+        ORDER BY 
+            CASE WHEN b.Status = 'Cancelled' THEN 1 ELSE 0 END,
+            b.CheckInDate
     """), {'cid': customer_id}).fetchall()
 
     return render_template("customer/my_bookings.html", bookings=bookings, current_date=date.today())
+
+
 
 @bp_customer.route('/customer/book', methods=['POST'])
 def book_room():
@@ -107,7 +122,7 @@ def book_room():
         
         db.session.execute(text("""
             INSERT INTO Booking (CustomerID, HotelID, RoomID, BookingDate, CheckInDate, CheckOutDate, Status)
-            VALUES (:cid, :hid, :rid, :bdate, :checkin, :checkout, 'Confirmed')
+            VALUES (:cid, :hid, :rid, :bdate, :checkin, :checkout, 'Pending')
         """), {
             'cid': customer_id,
             'hid': hotel_id,
