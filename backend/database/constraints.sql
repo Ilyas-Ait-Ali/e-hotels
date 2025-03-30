@@ -44,8 +44,8 @@ ALTER TABLE Customer
 
 -- Booking Constraints
 ALTER TABLE Booking
-    ADD CONSTRAINT CHK_Booking_Status CHECK (Status IN ('Pending', 'Confirmed', 'Cancelled')),
-    ADD CONSTRAINT CHK_Booking_Dates_If_Confirmed CHECK ((Status = 'Confirmed' AND CheckInDate IS NOT NULL AND CheckOutDate IS NOT NULL) OR (Status != 'Confirmed')),
+    ADD CONSTRAINT CHK_Booking_Status CHECK (Status IN ('Pending', 'Checked-in', 'Cancelled')),
+    ADD CONSTRAINT CHK_Booking_Dates_If_Rented CHECK ((Status = 'Checked-in' AND CheckInDate IS NOT NULL AND CheckOutDate IS NOT NULL) OR (Status != 'Checked-in')),
     ADD CONSTRAINT CHK_Booking_Date_Order CHECK (CheckOutDate > CheckInDate),
     ADD CONSTRAINT CHK_Booking_BookingDate CHECK (BookingDate <= CheckInDate);
 
