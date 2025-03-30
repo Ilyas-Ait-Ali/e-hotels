@@ -56,7 +56,12 @@ def search_rooms():
             EXISTS (
                 SELECT 1 FROM RoomProblems p
                 WHERE p.HotelID = r.HotelID AND p.RoomID = r.RoomID AND p.Resolved = FALSE
-            ) AS has_problem
+            ) AS has_problem,
+            (
+                SELECT string_agg(ra.Amenity, ', ')
+                FROM RoomAmenities ra
+                WHERE ra.HotelID = r.HotelID AND ra.RoomID = r.RoomID
+            ) AS amenities
         FROM Room r
         JOIN Hotel h ON r.HotelID = h.HotelID
         JOIN HotelChain hc ON h.HotelChainID = hc.HotelChainID
@@ -74,6 +79,7 @@ def search_rooms():
             )
         ORDER BY r.Price
     """
+
 
 
     results = db.session.execute(text(query), params).fetchall()
