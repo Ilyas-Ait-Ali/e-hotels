@@ -48,15 +48,16 @@ BEFORE INSERT ON Booking
 FOR EACH ROW
 EXECUTE FUNCTION limit_active_bookings();
 
--- Trigger 3: Prevent cancellation within 24 hours of check-in
+-- Trigger 3: Prevent cancellation on the day of check-in
 DROP TRIGGER IF EXISTS trg_prevent_late_cancellation ON Booking;
 DROP FUNCTION IF EXISTS prevent_late_cancellation CASCADE;
 
 CREATE OR REPLACE FUNCTION prevent_late_cancellation() RETURNS TRIGGER AS $$
 BEGIN
-    IF NEW.Status = 'Cancelled' AND OLD.Status != 'Cancelled' AND
-       NEW.CheckInDate - CURRENT_DATE <= 1 THEN
-        RAISE EXCEPTION 'Cannot cancel a booking within 24 hours of check-in.';
+    IF NEW.Status = 'Cancelled'
+       AND OLD.Status != 'Cancelled'
+       AND NEW.CheckInDate = CURRENT_DATE THEN
+        RAISE EXCEPTION 'Cannot cancel a booking on the day of check-in.';
     END IF;
     RETURN NEW;
 END;
