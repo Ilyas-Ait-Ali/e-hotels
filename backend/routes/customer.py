@@ -52,7 +52,11 @@ def search_rooms():
         params["minrooms"] = request.args["minrooms"]
 
     query = f"""
-        SELECT r.*, h.HotelName, h.Address, hc.ChainName, h.Rating
+        SELECT r.*, h.HotelName, h.Address, hc.ChainName, h.Rating,
+            EXISTS (
+                SELECT 1 FROM RoomProblems p
+                WHERE p.HotelID = r.HotelID AND p.RoomID = r.RoomID AND p.Resolved = FALSE
+            ) AS has_problem
         FROM Room r
         JOIN Hotel h ON r.HotelID = h.HotelID
         JOIN HotelChain hc ON h.HotelChainID = hc.HotelChainID
@@ -70,6 +74,7 @@ def search_rooms():
             )
         ORDER BY r.Price
     """
+
 
     results = db.session.execute(text(query), params).fetchall()
     return render_template("customer/search.html", rooms=results, checkin=checkin, checkout=checkout)
