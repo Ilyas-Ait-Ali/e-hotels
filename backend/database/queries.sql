@@ -27,13 +27,13 @@ ORDER BY UsageCount DESC
 LIMIT 1;
 
 -- Nested Query 1
--- List customers who have at least one confirmed booking
+-- List customers who have at least one checked-in booking
 SELECT FullName
 FROM Customer
 WHERE CustomerID IN (
     SELECT DISTINCT CustomerID
     FROM Booking
-    WHERE Status = 'Confirmed'
+    WHERE Status = 'Checked-in'
 );
 
 -- Nested Query 2
