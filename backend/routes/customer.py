@@ -51,6 +51,10 @@ def search_rooms():
         filters.append("h.Num_Rooms >= :minrooms")
         params["minrooms"] = request.args["minrooms"]
 
+    if request.args.get("viewtype"):
+        filters.append("r.ViewType = :viewtype")
+        params["viewtype"] = request.args["viewtype"]
+
     query = f"""
         SELECT r.*, h.HotelName, h.Address, hc.ChainName, h.Rating,
             EXISTS (
@@ -79,9 +83,6 @@ def search_rooms():
             )
         ORDER BY r.Price
     """
-
-
-
     results = db.session.execute(text(query), params).fetchall()
     return render_template("customer/search.html", rooms=results, checkin=checkin, checkout=checkout)
 
