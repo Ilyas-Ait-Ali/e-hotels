@@ -33,7 +33,7 @@ BEGIN
     SELECT COUNT(*) INTO active_bookings_count
     FROM Booking
     WHERE CustomerID = NEW.CustomerID
-      AND Status IN ('Pending', 'Confirmed');
+      AND Status IN ('Pending', 'Checked-in');
 
     IF active_bookings_count >= 5 THEN
         RAISE EXCEPTION 'Customer already has 5 or more active bookings.';
@@ -157,20 +157,26 @@ BEFORE DELETE ON Rental
 FOR EACH ROW
 EXECUTE FUNCTION archive_rental();
 
--- Trigger 6: Adjust room status based on booking updates (Confirmed → Occupied, Cancelled → Available)
+-- Trigger 6: Adjust room status based on booking updates (Checked-in → Occupied, Cancelled → Available)
 DROP TRIGGER IF EXISTS trg_update_room_status_booking ON Booking;
 DROP FUNCTION IF EXISTS update_room_status_booking CASCADE;
 
 CREATE OR REPLACE FUNCTION update_room_status_booking() RETURNS TRIGGER AS $$
 BEGIN
-    -- If booking is confirmed, assume the room will be used → mark as 'Occupied'
-    IF NEW.Status = 'Confirmed' AND OLD.Status != 'Confirmed' THEN
+    -- When booking becomes Pending → mark room as Booked
+    IF NEW.Status = 'Pending' AND (OLD.Status IS DISTINCT FROM 'Pending') THEN
+        UPDATE Room
+        SET Status = 'Booked'
+        WHERE RoomID = NEW.RoomID AND HotelID = NEW.HotelID;
+
+    -- When booking becomes Checked-in → mark room as Occupied
+    ELSIF NEW.Status = 'Checked-in' AND (OLD.Status IS DISTINCT FROM 'Checked-in') THEN
         UPDATE Room
         SET Status = 'Occupied'
         WHERE RoomID = NEW.RoomID AND HotelID = NEW.HotelID;
 
-    -- If booking is cancelled, and it was previously confirmed or pending → make room 'Available'
-    ELSIF NEW.Status = 'Cancelled' AND OLD.Status != 'Cancelled' THEN
+    -- When booking becomes Cancelled → mark room as Available
+    ELSIF NEW.Status = 'Cancelled' AND (OLD.Status IS DISTINCT FROM 'Cancelled') THEN
         UPDATE Room
         SET Status = 'Available'
         WHERE RoomID = NEW.RoomID AND HotelID = NEW.HotelID;
@@ -181,7 +187,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER trg_update_room_status_booking
-AFTER UPDATE ON Booking
+AFTER INSERT OR UPDATE ON Booking
 FOR EACH ROW
 EXECUTE FUNCTION update_room_status_booking();
 
@@ -212,4 +218,21 @@ CREATE TRIGGER trg_update_room_status_rental
 AFTER INSERT OR UPDATE ON Rental
 FOR EACH ROW
 EXECUTE FUNCTION update_room_status_rental();
+
+-- Trigger function to mark booking as Checked-in when rental is created
+CREATE OR REPLACE FUNCTION mark_booking_checked_in() RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.BookingID IS NOT NULL THEN
+        UPDATE Booking
+        SET Status = 'Checked-in'
+        WHERE BookingID = NEW.BookingID;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_mark_booking_checked_in
+AFTER INSERT ON Rental
+FOR EACH ROW
+EXECUTE FUNCTION mark_booking_checked_in();
 
