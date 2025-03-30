@@ -47,6 +47,6 @@
     </div>
 
     <button type="submit" class="btn btn-primary">{{ 'Add' if mode == 'add' else 'Update' }} Hotel</button>
-    <a href="{{ url_for('main.manage_hotels') }}" class="btn btn-secondary">Cancel</a>
+    <a href="{{ url_for('employee.manage_hotels') }}" class="btn btn-secondary">Cancel</a>
 </form>
 {% endblock %}

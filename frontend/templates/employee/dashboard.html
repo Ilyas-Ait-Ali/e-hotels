@@ -27,7 +27,7 @@
             <td>{{ b.checkoutdate }}</td>
             <td>{{ b.status }}</td>
             <td>
-                <form method="POST" action="{{ url_for('main.convert_booking') }}">
+                <form method="POST" action="{{ url_for('employee.convert_booking') }}">
                     <input type="hidden" name="booking_id" value="{{ b.bookingid }}">
                     <button class="btn btn-success btn-sm">Convert to Rental</button>
                 </form>

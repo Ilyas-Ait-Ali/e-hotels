@@ -84,7 +84,7 @@
             <td>{{ room.price }}</td>
             <td>{{ room.rating }}</td>
             <td>
-                <form method="POST" action="{{ url_for('main.book_room') }}">
+                <form method="POST" action="{{ url_for('customer.book_room') }}">
                     <input type="hidden" name="room_id" value="{{ room.roomid }}">
                     <input type="hidden" name="hotel_id" value="{{ room.hotelid }}">
                     <input type="hidden" name="checkin" value="{{ checkin }}">

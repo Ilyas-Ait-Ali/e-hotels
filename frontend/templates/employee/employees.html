@@ -4,7 +4,7 @@
 {% block content %}
 <h2>🧑‍💼 Manage Employees</h2>
 
-<a href="{{ url_for('main.add_employee') }}" class="btn btn-success mb-3">➕ Add New Employee</a>
+<a href="{{ url_for('employee.add_employee') }}" class="btn btn-success mb-3">➕ Add New Employee</a>
 
 {% if employees %}
 <table class="table table-bordered table-hover">
@@ -29,8 +29,8 @@
             <td>{{ employee.ssn }}</td>
             <td>{{ employee.hotelid }}</td>
             <td class="d-flex gap-2">
-                <a href="{{ url_for('main.edit_employee', employee_id=employee.employeeid) }}" class="btn btn-sm btn-primary">✏️ Edit</a>
-                <form method="POST" action="{{ url_for('main.delete_employee', employee_id=employee.employeeid) }}" onsubmit="return confirm('Are you sure you want to delete this employee?');">
+                <a href="{{ url_for('employee.edit_employee', employee_id=employee.employeeid) }}" class="btn btn-sm btn-primary">✏️ Edit</a>
+                <form method="POST" action="{{ url_for('employee.delete_employee', employee_id=employee.employeeid) }}" onsubmit="return confirm('Are you sure you want to delete this employee?');">
                     <button type="submit" class="btn btn-sm btn-danger">🗑️ Delete</button>
                 </form>
             </td>

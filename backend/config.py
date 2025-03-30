@@ -1,7 +1,7 @@
 import os
 
 DB_USER = 'postgres'
-DB_PASSWORD = 'enter your password'  # Enter your password
+DB_PASSWORD = 'ilyasdata'  # Enter your password
 DB_HOST = 'localhost'
 DB_PORT = '5432'
 DB_NAME = 'ehotels'
