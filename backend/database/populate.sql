@@ -317,3 +317,14 @@ VALUES
 
   -- Walk-in Rental (Customer 2, no booking)
   (2, 1, 105, 1, NULL, '2025-03-26', '2025-03-28', 'Completed', 580.00, '2025-03-28', 'Cash');
+
+
+-- Insert a global admin with full database access
+INSERT INTO Employee (HotelID, FullName, Address, SSN, Position)
+VALUES (
+    NULL,
+    'Admin',
+    'Headquarters, System Control Center',
+    '999-99-9999',
+    'Admin'
+);
