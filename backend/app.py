@@ -1,5 +1,5 @@
 import os
-from flask import Flask
+from flask import Flask, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from config import Config
 
@@ -13,5 +13,9 @@ def create_app():
 
     from routes.__init__ import init_app  
     init_app(app)
+
+    @app.route('/')
+    def root():
+        return redirect(url_for('auth.login'))
 
     return app
