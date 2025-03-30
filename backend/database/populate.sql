@@ -139,7 +139,7 @@ SET ManagerID = e.EmployeeID
 FROM Employee e
 WHERE Hotel.HotelID = e.HotelID AND e.Position = 'Manager';
 
--- Populate Rooms with smart pricing and features
+-- Populate Rooms with smart pricing and randomized view types
 DO $$
 DECLARE
     hotel_id INTEGER;
@@ -176,9 +176,9 @@ BEGIN
                 hotel_id,
                 base_price * (1 + i * 0.2),
                 cap,
-                views[(hotel_id + i) % 4 + 1],
-                CASE WHEN cap = 'single' THEN FALSE ELSE TRUE END,
-                status_order[(hotel_id % 4) + 1][i] -- Pick rotating status pattern
+                views[1 + floor(random() * 4)::int], -- random view type
+                (cap != 'single'),
+                status_order[(hotel_id % 4) + 1][i] -- rotating status
             );
         END LOOP;
     END LOOP;
@@ -294,76 +294,26 @@ BEGIN
     END LOOP;
 END $$;
 
--- Populate Bookings for Customer 1 Only
-DO $$
-DECLARE
-    booking_id INTEGER := 1;
-    hotel_id INTEGER := 1; -- Assign all bookings to Hotel 1 for simplicity
-    room_id INTEGER := 101; -- Assign all bookings to Room 1 for simplicity
-    booking_date DATE;
-    check_in_date DATE;
-    check_out_date DATE;
-BEGIN
-    FOR i IN 1..3 LOOP -- Create 3 bookings for Customer 1
-        booking_date := '2025-03-01'::DATE + (i - 1) * INTERVAL '2 days';
-        check_in_date := booking_date + INTERVAL '1 day';
-        check_out_date := check_in_date + INTERVAL '3 days';
+-- Bookings
+INSERT INTO Booking (CustomerID, HotelID, RoomID, BookingDate, CheckInDate, CheckOutDate, Status)
+VALUES
+  -- Pending Booking
+  (1, 1, 101, '2025-03-20', '2025-03-23', '2025-03-26', 'Pending'),
 
-        INSERT INTO Booking (CustomerID, HotelID, RoomID, BookingDate, CheckInDate, CheckOutDate, Status)
-        VALUES (
-            1, -- Customer 1
-            hotel_id,
-            room_id,
-            booking_date,
-            check_in_date,
-            check_out_date,
-            CASE 
-                WHEN booking_id % 2 = 0 THEN 'Confirmed'
-                ELSE 'Pending'
-            END
-        );
+  -- Checked-in Booking (will be turned into rental)
+  (1, 1, 102, '2025-03-21', '2025-03-24', '2025-03-27', 'Checked-in'),
 
-        booking_id := booking_id + 1;
-    END LOOP;
-END $$;
+  -- Cancelled Booking
+  (2, 1, 103, '2025-03-22', '2025-03-25', '2025-03-28', 'Cancelled');
 
--- Populate Rentals for Customer 1 Only
-DO $$
-DECLARE
-    rental_id INTEGER := 1;
-    hotel_id INTEGER := 1; -- Assign all rentals to Hotel 1 for simplicity
-    room_id INTEGER := 101; -- Assign all rentals to Room 1 for simplicity
-    employee_id INTEGER := 1; -- Assign all rentals to Employee 1 for simplicity
-    booking_id INTEGER;
-    check_in_date DATE;
-    check_out_date DATE;
-BEGIN
-    FOR i IN 1..3 LOOP -- Create 3 rentals for Customer 1
-        booking_id := rental_id; -- Link rental to booking
-        check_in_date := '2025-03-01'::DATE + (i - 1) * INTERVAL '3 days';
-        check_out_date := check_in_date + INTERVAL '2 days';
+-- Rentals
+INSERT INTO Rental (CustomerID, HotelID, RoomID, EmployeeID, BookingID, CheckInDate, CheckOutDate, Status, PaymentAmount, PaymentDate, PaymentMethod)
+VALUES
+  -- Rental from checked-in booking (BookingID = 2)
+  (1, 1, 102, 1, 2, '2025-03-24', '2025-03-27', 'Completed', 600.00, '2025-03-27', 'Credit Card'),
 
-        INSERT INTO Rental (CustomerID, HotelID, RoomID, EmployeeID, BookingID, CheckInDate, CheckOutDate, Status, PaymentAmount, PaymentDate, PaymentMethod)
-        VALUES (
-            1, -- Customer 1
-            hotel_id,
-            room_id,
-            employee_id,
-            booking_id,
-            check_in_date,
-            check_out_date,
-            CASE 
-                WHEN rental_id % 2 = 0 THEN 'Completed'
-                ELSE 'Ongoing'
-            END,
-            500 + (rental_id * 10), -- Deterministic payment amount
-            check_out_date,
-            CASE 
-                WHEN rental_id % 2 = 0 THEN 'Credit Card'
-                ELSE 'Cash'
-            END
-        );
+  -- Walk-in Rental (Customer 1, no booking)
+  (1, 1, 104, 1, NULL, '2025-03-26', '2025-03-29', 'Ongoing', 550.00, '2025-03-29', 'Debit Card'),
 
-        rental_id := rental_id + 1;
-    END LOOP;
-END $$;
+  -- Walk-in Rental (Customer 2, no booking)
+  (2, 1, 105, 1, NULL, '2025-03-26', '2025-03-28', 'Completed', 580.00, '2025-03-28', 'Cash');
