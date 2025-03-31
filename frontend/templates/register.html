@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}Register - e-Hotels{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h3 class="card-title text-center mb-4">📝 Create a Customer Account</h3>
+                {% if error %}
+                    <div class="alert alert-danger">{{ error }}</div>
+                {% endif %}
+                <form method="POST">
+                    <div class="mb-3">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" name="full_name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Address</label>
+                        <input type="text" name="address" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">ID Type</label>
+                        <select name="id_type" class="form-select" required>
+                            <option value="">Select...</option>
+                            <option value="Driver License">Driver License</option>
+                            <option value="Passport">Passport</option>
+                            <option value="National ID">National ID</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">ID Number</label>
+                        <input type="text" name="id_number" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">Register</button>
+                </form>
+                <div class="mt-3 text-center">
+                    Already have an account? <a href="{{ url_for('auth.login') }}">Login here</a>.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

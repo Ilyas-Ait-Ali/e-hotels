@@ -54,6 +54,47 @@ def login():
 
     return render_template('login.html')
 
+@bp_auth.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        full_name = request.form['full_name'].strip()
+        address = request.form['address'].strip()
+        id_type = request.form['id_type']
+        id_number = request.form['id_number'].strip()
+        registration_date = date.today()
+
+        if not full_name or not address or not id_type or not id_number:
+            return render_template('register.html', error="Please fill in all fields.")
+
+        # Check for existing user
+        existing = db.session.execute(text("""
+            SELECT 1 FROM Customer WHERE LOWER(FullName) = :name AND IDNumber = :idnum
+        """), {'name': full_name.lower(), 'idnum': id_number}).fetchone()
+
+        if existing:
+            return render_template('register.html', error="An account with that name and ID already exists.")
+
+        try:
+            db.session.execute(text("""
+                INSERT INTO Customer (FullName, Address, IDType, IDNumber, RegistrationDate)
+                VALUES (:name, :address, :idtype, :idnum, :regdate)
+            """), {
+                'name': full_name,
+                'address': address,
+                'idtype': id_type,
+                'idnum': id_number,
+                'regdate': registration_date
+            })
+            db.session.commit()
+            flash("✅ Account created successfully. Please log in.")
+            return redirect(url_for('auth.login'))
+
+        except Exception as e:
+            db.session.rollback()
+            return render_template('register.html', error=f"❌ Registration failed: {e}")
+
+    return render_template('register.html')
+
 
 @bp_auth.route('/logout')
 def logout():
