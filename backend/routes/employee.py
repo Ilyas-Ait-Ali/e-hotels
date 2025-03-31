@@ -1102,14 +1102,32 @@ def delete_rental(rental_id):
         return redirect(url_for('auth.login'))
 
     try:
-        db.session.execute(text("DELETE FROM Rental WHERE RentalID = :rid"), {'rid': rental_id})
+        
+        result = db.session.execute(text("""
+            SELECT BookingID FROM Rental WHERE RentalID = :rid
+        """), {'rid': rental_id}).fetchone()
+
+        booking_id = result.bookingid if result and result.bookingid else None
+
+        
+        db.session.execute(text("""
+            DELETE FROM Rental WHERE RentalID = :rid
+        """), {'rid': rental_id})
+
+        
+        if booking_id:
+            db.session.execute(text("""
+                DELETE FROM Booking WHERE BookingID = :bid
+            """), {'bid': booking_id})
+
         db.session.commit()
-        flash("✅ Rental archived and deleted.")
+        flash("✅ Rental (and booking if existed) archived and deleted.")
     except Exception as e:
         db.session.rollback()
         flash(f"❌ Failed to delete rental: {e}")
 
     return redirect(url_for('employee.view_rentals'))
+
 
 @bp_employee.route('/employee/rentals/payment', methods=['POST'])
 def add_payment():
