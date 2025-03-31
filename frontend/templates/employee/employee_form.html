@@ -20,11 +20,11 @@
         <select name="position" class="form-select" required>
             <option value="">Select...</option>
             {% if session['position'] == 'Admin' %}
-                {% for role in ['Admin', 'Manager', 'Receptionist', 'Housekeeper'] %}
+                {% for role in ['Admin', 'Manager', 'Receptionist'] %}
                     <option value="{{ role }}" {% if employee and employee.position == role %}selected{% endif %}>{{ role }}</option>
                 {% endfor %}
             {% else %}
-                {% for role in ['Receptionist', 'Housekeeper'] %}
+                {% for role in ['Receptionist'] %}
                     <option value="{{ role }}" {% if employee and employee.position == role %}selected{% endif %}>{{ role }}</option>
                 {% endfor %}
             {% endif %}
