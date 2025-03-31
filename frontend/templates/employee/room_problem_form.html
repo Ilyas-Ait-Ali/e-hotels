@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Report' if mode == 'add' else 'Edit' }} Room Problem{% endblock %}
+
+{% block content %}
+<h2>{{ '➕ Report' if mode == 'add' else '✏️ Edit' }} Room Problem</h2>
+
+<form method="POST">
+    {% if not hotel_id %}
+    <div class="mb-3">
+        <label class="form-label">Hotel ID</label>
+        <input type="number" name="hotel_id" class="form-control" value="{{ problem_data.hotelid if problem_data else '' }}" {% if mode == 'edit' %}readonly{% endif %} required>
+    </div>
+    {% else %}
+    <input type="hidden" name="hotel_id" value="{{ hotel_id }}">
+    {% endif %}
+
+    <div class="mb-3">
+        <label class="form-label">Room ID</label>
+        <input type="number" name="room_id" class="form-control" value="{{ problem_data.roomid if problem_data else '' }}" {% if mode == 'edit' %}readonly{% endif %} required>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Problem Description</label>
+        <textarea name="problem" class="form-control" rows="3" required>{{ problem_data.problem if problem_data else '' }}</textarea>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Report Date</label>
+        <input type="date" name="report_date" class="form-control" value="{{ problem_data.reportdate if problem_data else '' }}" required>
+    </div>
+
+    {% if mode == 'edit' %}
+    <div class="mb-3">
+        <label class="form-label">Resolved?</label>
+        <select name="resolved" class="form-select">
+            <option value="false" {% if not problem_data.resolved %}selected{% endif %}>No</option>
+            <option value="true" {% if problem_data.resolved %}selected{% endif %}>Yes</option>
+        </select>
+    </div>
+    {% endif %}
+
+    <button type="submit" class="btn btn-primary">{{ 'Report' if mode == 'add' else 'Update' }}</button>
+    <a href="{{ url_for('employee.manage_room_problems') }}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}

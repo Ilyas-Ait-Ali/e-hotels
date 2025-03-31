@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}Manage Room Problems{% endblock %}
+
+{% block content %}
+<h2>🛠️ Manage Room Problems</h2>
+
+<a href="{{ url_for('employee.add_room_problem') }}" class="btn btn-success mb-3">➕ Report New Problem</a>
+
+{% if problems %}
+<table class="table table-bordered table-hover">
+    <thead class="table-dark">
+        <tr>
+            <th>Hotel</th>
+            <th>Hotel ID</th>
+            <th>Room ID</th>
+            <th>Problem</th>
+            <th>Report Date</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for p in problems %}
+        <tr>
+            <td>{{ p.hotelname }}</td>
+            <td>{{ p.hotelid }}</td>
+            <td>{{ p.roomid }}</td>
+            <td>{{ p.problem }}</td>
+            <td>{{ p.reportdate }}</td>
+            <td>
+                {% if p.resolved %}
+                    <span class="badge bg-success">Resolved</span>
+                {% else %}
+                    <span class="badge bg-danger">Unresolved</span>
+                {% endif %}
+            </td>
+            <td class="d-flex gap-2">
+                <a href="{{ url_for('employee.edit_room_problem', room_id=p.roomid, problem=p.problem) }}" class="btn btn-sm btn-primary">✏️ Edit</a>
+                <form method="POST" action="{{ url_for('employee.delete_room_problem', room_id=p.roomid, problem=p.problem) }}" onsubmit="return confirm('Are you sure you want to delete this problem?');">
+                    <input type="hidden" name="hotel_id" value="{{ p.hotelid }}">
+                    <button type="submit" class="btn btn-sm btn-danger">🗑️ Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="alert alert-info">No problems reported.</div>
+{% endif %}
+{% endblock %}
