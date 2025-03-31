@@ -37,15 +37,58 @@
             <td>${{ '%.2f'|format(r.paymentamount) }}</td>
             <td>{{ r.paymentmethod }}</td>
             <td class="d-flex gap-2">
+                
                 <form method="POST" action="{{ url_for('employee.delete_rental', rental_id=r.rentalid) }}"
                       onsubmit="return confirm('Are you sure you want to archive and delete this rental?');">
                     <button type="submit" class="btn btn-sm btn-danger">🗑️ Delete</button>
                 </form>
+
+                
+                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#paymentModal{{ r.rentalid }}">
+                    💳 Add Payment
+                </button>
             </td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
+
+
+{% for r in rentals %}
+<div class="modal fade" id="paymentModal{{ r.rentalid }}" tabindex="-1" aria-labelledby="paymentModalLabel{{ r.rentalid }}" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="POST" action="{{ url_for('employee.add_payment') }}">
+        <input type="hidden" name="rental_id" value="{{ r.rentalid }}">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="paymentModalLabel{{ r.rentalid }}">Add Payment for Rental #{{ r.rentalid }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Payment Amount ($)</label>
+                    <input type="number" class="form-control" name="payment_amount" step="0.01" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Payment Method</label>
+                    <select name="payment_method" class="form-select" required>
+                        <option value="">Select...</option>
+                        <option value="Cash">Cash</option>
+                        <option value="Credit Card">Credit Card</option>
+                        <option value="Debit Card">Debit Card</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-success">Save Payment</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </form>
+  </div>
+</div>
+{% endfor %}
+
 {% else %}
 <div class="alert alert-info">No rentals found.</div>
 {% endif %}

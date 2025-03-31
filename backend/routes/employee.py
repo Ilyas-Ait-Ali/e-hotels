@@ -1111,6 +1111,36 @@ def delete_rental(rental_id):
 
     return redirect(url_for('employee.view_rentals'))
 
+@bp_employee.route('/employee/rentals/payment', methods=['POST'])
+def add_payment():
+    if 'user_type' not in session or session['user_type'] != 'employee':
+        return redirect(url_for('auth.login'))
+
+    rental_id = request.form.get('rental_id')
+    payment_amount = request.form.get('payment_amount')
+    payment_method = request.form.get('payment_method')
+
+    try:
+        db.session.execute(text("""
+            UPDATE Rental
+            SET PaymentAmount = :amount,
+                PaymentMethod = :method,
+                PaymentDate = CURRENT_DATE
+            WHERE RentalID = :rid
+        """), {
+            'amount': payment_amount,
+            'method': payment_method,
+            'rid': rental_id
+        })
+        db.session.commit()
+        flash("✅ Payment added successfully.")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"❌ Failed to add payment: {e}")
+
+    return redirect(url_for('employee.view_rentals'))
+
+
 @bp_employee.route('/employee/bookings/archive')
 def view_booking_archive():
     if 'user_type' not in session or session['user_type'] != 'employee':
