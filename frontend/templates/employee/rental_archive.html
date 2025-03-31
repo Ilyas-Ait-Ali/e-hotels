@@ -4,6 +4,22 @@
 {% block content %}
 <h2>📦 Archived Rentals</h2>
 
+<form method="GET" class="mb-3 row g-2 align-items-center">
+    <div class="col-auto">
+        <label for="sort" class="form-label">Sort By:</label>
+    </div>
+    <div class="col-auto">
+        <select name="sort" id="sort" class="form-select" onchange="this.form.submit()">
+            <option value="archive_desc" {% if request.args.sort == "archive_desc" %}selected{% endif %}>📅 Archive Date (Newest)</option>
+            <option value="archive_asc" {% if request.args.sort == "archive_asc" %}selected{% endif %}>📅 Archive Date (Oldest)</option>
+            <option value="checkin" {% if request.args.sort == "checkin" %}selected{% endif %}>🗓️ Check-In Date</option>
+            <option value="customer" {% if request.args.sort == "customer" %}selected{% endif %}>👤 Customer Name</option>
+            <option value="hotel" {% if request.args.sort == "hotel" %}selected{% endif %}>🏨 Hotel Name</option>
+            <option value="employee" {% if request.args.sort == "employee" %}selected{% endif %}>🧑‍💼 Employee Name</option>
+        </select>
+    </div>
+</form>
+
 {% if rentals %}
 <table class="table table-bordered table-hover">
     <thead class="table-dark">

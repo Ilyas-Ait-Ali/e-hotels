@@ -1045,23 +1045,35 @@ def view_booking_archive():
 
     position = session.get('position')
     hotel_id = session.get('hotel_id')
+    sort = request.args.get('sort', 'archivedate_desc')
+
+
+    order_map = {
+        'archivedate_desc': 'ArchiveDate DESC',
+        'archivedate_asc': 'ArchiveDate ASC',
+        'bookingdate': 'BookingDate',
+        'checkin': 'CheckInDate',
+        'customer': 'CustomerName',
+        'hotel': 'HotelName'
+    }
+    order_clause = order_map.get(sort, 'ArchiveDate DESC')
 
     if position == 'Admin':
-        query = text("SELECT * FROM BookingArchive ORDER BY ArchiveDate DESC")
+        query = text(f"SELECT * FROM BookingArchive ORDER BY {order_clause}")
         params = {}
     else:
-        # Filter by hotel for non-admins
-        query = text("""
+        query = text(f"""
             SELECT * FROM BookingArchive 
             WHERE HotelName IN (
                 SELECT HotelName FROM Hotel WHERE HotelID = :hid
             )
-            ORDER BY ArchiveDate DESC
+            ORDER BY {order_clause}
         """)
         params = {'hid': hotel_id}
 
     archived_bookings = db.session.execute(query, params).fetchall()
-    return render_template("employee/booking_archive.html", bookings=archived_bookings)
+    return render_template("employee/booking_archive.html", bookings=archived_bookings, sort=sort)
+
 
 
 @bp_employee.route('/employee/rentals/archive')
@@ -1071,17 +1083,30 @@ def view_rental_archive():
 
     position = session.get('position')
     hotel_id = session.get('hotel_id')
+    sort = request.args.get("sort", "archivedate_desc")
+
+    order_clause = "ArchiveDate DESC"
+    if sort == "archivedate_asc":
+        order_clause = "ArchiveDate ASC"
+    elif sort == "checkin":
+        order_clause = "CheckInDate"
+    elif sort == "customer":
+        order_clause = "CustomerName"
+    elif sort == "hotel":
+        order_clause = "HotelName"
+    elif sort == "employee":
+        order_clause = "EmployeeName"
 
     if position == 'Admin':
-        query = text("SELECT * FROM RentalArchive ORDER BY ArchiveDate DESC")
+        query = text(f"SELECT * FROM RentalArchive ORDER BY {order_clause}")
         params = {}
     else:
-        query = text("""
+        query = text(f"""
             SELECT * FROM RentalArchive 
             WHERE HotelName IN (
                 SELECT HotelName FROM Hotel WHERE HotelID = :hid
             )
-            ORDER BY ArchiveDate DESC
+            ORDER BY {order_clause}
         """)
         params = {'hid': hotel_id}
 

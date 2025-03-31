@@ -4,6 +4,22 @@
 {% block content %}
 <h2>📦 Archived Bookings</h2>
 
+<form method="GET" class="mb-3 row g-2 align-items-center">
+    <div class="col-auto">
+        <label for="sort" class="form-label">Sort By:</label>
+    </div>
+    <div class="col-auto">
+        <select name="sort" id="sort" class="form-select" onchange="this.form.submit()">
+            <option value="archivedate_desc" {% if sort == 'archivedate_desc' %}selected{% endif %}>📅 Archive Date (Newest)</option>
+            <option value="archivedate_asc" {% if sort == 'archivedate_asc' %}selected{% endif %}>📅 Archive Date (Oldest)</option>
+            <option value="bookingdate" {% if sort == 'bookingdate' %}selected{% endif %}>🗓 Booking Date</option>
+            <option value="checkin" {% if sort == 'checkin' %}selected{% endif %}>🛎 Check-In Date</option>
+            <option value="customer" {% if sort == 'customer' %}selected{% endif %}>👤 Customer Name</option>
+            <option value="hotel" {% if sort == 'hotel' %}selected{% endif %}>🏨 Hotel Name</option>
+        </select>
+    </div>
+</form>
+
 {% if bookings %}
 <table class="table table-bordered table-hover">
     <thead class="table-dark">
