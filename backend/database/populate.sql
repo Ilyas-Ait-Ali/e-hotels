@@ -304,7 +304,7 @@ END $$;
 INSERT INTO Booking (CustomerID, HotelID, RoomID, BookingDate, CheckInDate, CheckOutDate, Status)
 VALUES
   -- Pending Booking
-  (1, 1, 101, '2025-03-20', '2025-03-23', '2025-03-26', 'Pending'),
+  (1, 1, 101, '2025-03-20', '2025-03-23', '2025-03-26', 'Cancelled'),
 
   -- Checked-in Booking (will be turned into rental)
   (1, 1, 102, '2025-03-21', '2025-03-24', '2025-03-27', 'Checked-in'),
