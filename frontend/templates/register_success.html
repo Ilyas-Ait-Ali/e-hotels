@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block title %}Registration Successful{% endblock %}
+
+{% block content %}
+<div class="alert alert-success mt-4">
+    <h4 class="alert-heading">🎉 Welcome, {{ full_name }}!</h4>
+    <p>Your account has been successfully created.</p>
+    <hr>
+    <p>Your <strong>Customer ID</strong> is:</p>
+    <div class="d-flex align-items-center mb-3">
+        <code id="customerId" class="fs-5 me-2">{{ customer_id }}</code>
+        <button onclick="copyID()" class="btn btn-outline-secondary btn-sm">📋 Copy</button>
+    </div>
+    <p>You'll need this ID along with your full name to log in.</p>
+    <a href="{{ url_for('auth.login') }}" class="btn btn-primary mt-3">Go to Login</a>
+</div>
+
+<script>
+function copyID() {
+    const idText = document.getElementById("customerId").innerText;
+    navigator.clipboard.writeText(idText).then(() => {
+        alert("Customer ID copied to clipboard!");
+    });
+}
+</script>
+{% endblock %}
