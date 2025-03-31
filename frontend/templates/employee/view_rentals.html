@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}Manage Rentals{% endblock %}
+
+{% block content %}
+<h2>🛏️ Manage Rentals</h2>
+
+{% if rentals %}
+<table class="table table-bordered table-hover">
+    <thead class="table-dark">
+        <tr>
+            <th>Customer</th>
+            <th>Hotel</th>
+            <th>Room ID</th>
+            <th>Check-In</th>
+            <th>Check-Out</th>
+            <th>Status</th>
+            <th>Payment</th>
+            <th>Method</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for r in rentals %}
+        <tr>
+            <td>{{ r.customername }}</td>
+            <td>{{ r.hotelname }}</td>
+            <td>{{ r.roomid }}</td>
+            <td>{{ r.checkindate }}</td>
+            <td>{{ r.checkoutdate }}</td>
+            <td>
+                {% if r.status == 'Ongoing' %}
+                    <span class="badge bg-info text-dark">Ongoing</span>
+                {% elif r.status == 'Completed' %}
+                    <span class="badge bg-success">Completed</span>
+                {% endif %}
+            </td>
+            <td>${{ '%.2f'|format(r.paymentamount) }}</td>
+            <td>{{ r.paymentmethod }}</td>
+            <td class="d-flex gap-2">
+                <form method="POST" action="{{ url_for('employee.delete_rental', rental_id=r.rentalid) }}"
+                      onsubmit="return confirm('Are you sure you want to archive and delete this rental?');">
+                    <button type="submit" class="btn btn-sm btn-danger">🗑️ Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="alert alert-info">No rentals found.</div>
+{% endif %}
+{% endblock %}
