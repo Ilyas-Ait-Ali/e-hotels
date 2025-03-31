@@ -38,9 +38,6 @@
             
                 {% if session.position == 'Admin' or session.position == 'Manager' %}
                     <li class="nav-item">
-                        <a class="nav-link {% if request.path == '/employee/customers' %}active{% endif %}" href="{{ url_for('employee.manage_customers') }}">Manage Customers</a>
-                    </li>
-                    <li class="nav-item">
                         <a class="nav-link {% if request.path == '/employee/employees' %}active{% endif %}" href="{{ url_for('employee.manage_employees') }}">Manage Employees</a>
                     </li>
                     <li class="nav-item">
@@ -50,10 +47,13 @@
             
                 {% if session.position == 'Admin' %}
                     <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/employee/customers' %}active{% endif %}" href="{{ url_for('employee.manage_customers') }}">Manage Customers</a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link {% if request.path == '/employee/hotels' %}active{% endif %}" href="{{ url_for('employee.manage_hotels') }}">Manage Hotels</a>
                     </li>
                 {% endif %}
-                
+
                 <li class="nav-item">
                     <a class="nav-link {% if request.path == '/employee/problems' %}active{% endif %}" href="{{ url_for('employee.manage_room_problems') }}">Manage Room Problems</a>
                 </li>
