@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}Archived Bookings{% endblock %}
+
+{% block content %}
+<h2>📦 Archived Bookings</h2>
+
+{% if bookings %}
+<table class="table table-bordered table-hover">
+    <thead class="table-dark">
+        <tr>
+            <th>Booking ID</th>
+            <th>Customer</th>
+            <th>Hotel</th>
+            <th>Room</th>
+            <th>Booking Date</th>
+            <th>Check-In</th>
+            <th>Check-Out</th>
+            <th>Status</th>
+            <th>Archived</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for b in bookings %}
+        <tr>
+            <td>{{ b.bookingid }}</td>
+            <td>{{ b.customername }}</td>
+            <td>{{ b.hotelname }}</td>
+            <td>{{ b.roomidentifier }}</td>
+            <td>{{ b.bookingdate }}</td>
+            <td>{{ b.checkindate }}</td>
+            <td>{{ b.checkoutdate }}</td>
+            <td>{{ b.status }}</td>
+            <td>{{ b.archivedate }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="alert alert-info">No archived bookings found.</div>
+{% endif %}
+{% endblock %}
