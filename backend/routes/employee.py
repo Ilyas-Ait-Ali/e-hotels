@@ -92,9 +92,11 @@ def rent_room():
         flash("You must be logged in as an employee.")
         return redirect(url_for('auth.login'))
 
+    position = session.get("position")
+    hotel_id = session.get("hotel_id") if position != 'Admin' else None
+
     if request.method == 'POST':
         customer_name = request.form.get("customer_name").strip()
-        hotel_id = request.form.get("hotel_id")
         room_id = request.form.get("room_id")
         checkin = request.form.get("checkin")
         checkout = request.form.get("checkout")
@@ -102,7 +104,14 @@ def rent_room():
         payment_method = request.form.get("payment_method")
         employee_id = session["user_id"]
 
-        
+        if position == "Admin":
+            hotel_id = request.form.get("hotel_id")
+
+        if not hotel_id:
+            flash("❌ Hotel ID is required for Admin.")
+            return redirect(url_for('employee.rent_room'))
+
+        # Get CustomerID
         customer = db.session.execute(
             text("SELECT CustomerID FROM Customer WHERE FullName = :name"),
             {"name": customer_name}
@@ -138,10 +147,14 @@ def rent_room():
             })
             db.session.commit()
 
+            hotel = db.session.execute(text("""
+                SELECT HotelName FROM Hotel WHERE HotelID = :hid
+            """), {"hid": hotel_id}).fetchone()
+
             return render_template(
                 "employee/rent_success.html",
                 customer_name=customer_name,
-                hotel_id=hotel_id,
+                hotel_name=hotel.hotelname if hotel else f"Hotel #{hotel_id}",
                 room_id=room_id,
                 checkin=checkin,
                 checkout=checkout,
@@ -155,7 +168,9 @@ def rent_room():
             flash(f"❌ Rental failed: {e}")
             return redirect(url_for('employee.rent_room'))
 
-    return render_template("employee/rent_form.html")
+    return render_template("employee/rent_form.html", is_admin=(position == "Admin"))
+
+
 
 @bp_employee.route('/employee/customers')
 def manage_customers():
