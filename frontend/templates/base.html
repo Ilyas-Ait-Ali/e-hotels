@@ -8,7 +8,6 @@
 <body>
 
 {% if request.endpoint != 'auth.login' %}
-<!-- Navigation Tabs -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
     <div class="container-fluid">
         <a class="navbar-brand" href="#">e-Hotels</a>
@@ -17,72 +16,78 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarContent">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+
                 {% if session.user_type == 'customer' %}
-                <li class="nav-item">
-                    <a class="nav-link {% if request.path.startswith('/customer/search') %}active{% endif %}" href="{{ url_for('customer.search_rooms') }}">Search Rooms</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {% if request.path.startswith('/customer/my_bookings') %}active{% endif %}" href="{{ url_for('customer.my_bookings') }}">My Bookings</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {% if request.path.startswith('/customer/rentings') %}active{% endif %}" href="{{ url_for('customer.my_rentings') }}">My Rentings</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {% if request.path == '/customer/hotels' %}active{% endif %}" href="{{ url_for('customer.view_all_hotels') }}">View Hotels</a>
-                </li>                                
-                <li class="nav-item">
-                    <a class="nav-link {% if request.path == '/view/available-rooms' %}active{% endif %}" href="{{ url_for('view.available_rooms_per_area') }}">Rooms per City</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {% if request.path == '/view/room-capacity' %}active{% endif %}" href="{{ url_for('view.total_room_capacity') }}">Hotel Capacities</a>
-                </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path.startswith('/customer/search') %}active{% endif %}" href="{{ url_for('customer.search_rooms') }}">Search Rooms</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path.startswith('/customer/my_bookings') %}active{% endif %}" href="{{ url_for('customer.my_bookings') }}">My Bookings</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path.startswith('/customer/rentings') %}active{% endif %}" href="{{ url_for('customer.my_rentings') }}">My Rentings</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/customer/hotels' %}active{% endif %}" href="{{ url_for('customer.view_all_hotels') }}">View Hotels</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/view/available-rooms' %}active{% endif %}" href="{{ url_for('view.available_rooms_per_area') }}">📊 Rooms per City</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/view/room-capacity' %}active{% endif %}" href="{{ url_for('view.total_room_capacity') }}">🏨 Hotel Capacities</a>
+                    </li>
 
                 {% elif session.user_type == 'employee' %}
-                <li class="nav-item">
-                    <a class="nav-link {% if request.path.startswith('/employee/dashboard') %}active{% endif %}" href="{{ url_for('employee.employee_dashboard') }}">Convert to Booking</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {% if request.path == '/employee/rent-room' %}active{% endif %}" href="{{ url_for('employee.rent_room') }}">Rent Room</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {% if request.path == '/employee/bookings' %}active{% endif %}" href="{{ url_for('employee.view_bookings') }}">Manage Bookings</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {% if request.path == '/employee/bookings/archive' %}active{% endif %}" href="{{ url_for('employee.view_booking_archive') }}">Booking Archive</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {% if request.path == '/employee/rentals' %}active{% endif %}" href="{{ url_for('employee.view_rentals') }}">Manage Rentals</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {% if request.path == '/employee/rentals/archive' %}active{% endif %}" href="{{ url_for('employee.view_rental_archive') }}">Rental Archive</a>
-                </li>
+                    <!-- Bookings -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle {% if 'booking' in request.endpoint %}active{% endif %}" href="#" role="button" data-bs-toggle="dropdown">📅 Bookings</a>
+                        <ul class="dropdown-menu dropdown-menu-dark">
+                            <li><a class="dropdown-item" href="{{ url_for('employee.employee_dashboard') }}">Convert to Booking</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('employee.view_bookings') }}">Manage Bookings</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('employee.view_booking_archive') }}">Booking Archive</a></li>
+                        </ul>
+                    </li>
 
-                {% if session.position in ['Admin', 'Manager'] %}
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle {% if request.path.startswith('/employee/') and 'manage' in request.endpoint %}active{% endif %}"
-                       href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        🛠 Management
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-dark">
-                        {% if session.position == 'Admin' %}
-                        <li><a class="dropdown-item" href="{{ url_for('employee.manage_customers') }}">Manage Customers</a></li>
-                        <li><a class="dropdown-item" href="{{ url_for('employee.manage_hotels') }}">Manage Hotels</a></li>
-                        {% endif %}
-                        <li><a class="dropdown-item" href="{{ url_for('employee.manage_employees') }}">Manage Employees</a></li>
-                        <li><a class="dropdown-item" href="{{ url_for('employee.manage_rooms') }}">Manage Rooms</a></li>
-                    </ul>
-                </li>
-                {% endif %}
+                    <!-- Rentals -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle {% if 'rental' in request.endpoint %}active{% endif %}" href="#" role="button" data-bs-toggle="dropdown">🏨 Rentals</a>
+                        <ul class="dropdown-menu dropdown-menu-dark">
+                            <li><a class="dropdown-item" href="{{ url_for('employee.rent_room') }}">Rent Room</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('employee.view_rentals') }}">Manage Rentals</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('employee.view_rental_archive') }}">Rental Archive</a></li>
+                        </ul>
+                    </li>
 
-                <li class="nav-item">
-                    <a class="nav-link {% if request.path == '/employee/problems' %}active{% endif %}" href="{{ url_for('employee.manage_room_problems') }}">Manage Room Problems</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {% if request.path == '/view/available-rooms' %}active{% endif %}" href="{{ url_for('view.available_rooms_per_area') }}">Rooms per City</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {% if request.path == '/view/room-capacity' %}active{% endif %}" href="{{ url_for('view.total_room_capacity') }}">Hotel Capacities</a>
-                </li>
+                    <!-- Room Management -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle {% if request.endpoint == 'employee.manage_room_problems' or request.endpoint == 'employee.manage_rooms' %}active{% endif %}" href="#" role="button" data-bs-toggle="dropdown">🛏 Room Management</a>
+                        <ul class="dropdown-menu dropdown-menu-dark">
+                            <li><a class="dropdown-item" href="{{ url_for('employee.manage_rooms') }}">Manage Rooms</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('employee.manage_room_problems') }}">Room Problems</a></li>
+                        </ul>
+                    </li>
+
+                    <!-- Manage Entities (Admin/Manager) -->
+                    {% if session.position in ['Admin', 'Manager'] %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle {% if 'manage' in request.endpoint and request.endpoint not in ['employee.manage_rooms', 'employee.manage_room_problems'] %}active{% endif %}" href="#" role="button" data-bs-toggle="dropdown">👥 Manage Entities</a>
+                        <ul class="dropdown-menu dropdown-menu-dark">
+                            {% if session.position == 'Admin' %}
+                                <li><a class="dropdown-item" href="{{ url_for('employee.manage_customers') }}">Manage Customers</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('employee.manage_hotels') }}">Manage Hotels</a></li>
+                            {% endif %}
+                            <li><a class="dropdown-item" href="{{ url_for('employee.manage_employees') }}">Manage Employees</a></li>
+                        </ul>
+                    </li>
+                    {% endif %}
+
+                    <!-- Top-level Views -->
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/view/available-rooms' %}active{% endif %}" href="{{ url_for('view.available_rooms_per_area') }}">📊 Rooms per City</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/view/room-capacity' %}active{% endif %}" href="{{ url_for('view.total_room_capacity') }}">🏨 Hotel Capacities</a>
+                    </li>
                 {% endif %}
             </ul>
 
@@ -97,6 +102,7 @@
     </div>
 </nav>
 {% endif %}
+    
 
 <!-- Page Content -->
 <div class="container">
