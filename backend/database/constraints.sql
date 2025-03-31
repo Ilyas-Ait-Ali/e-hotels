@@ -33,7 +33,9 @@ ALTER TABLE Room
 -- RoomProblems Constraints
 ALTER TABLE RoomProblems
     ADD CONSTRAINT CHK_RoomProblem_NotNull CHECK (Problem IS NOT NULL AND LENGTH(TRIM(Problem)) > 0),
+    ADD CONSTRAINT CHK_ReportDate_NotFuture CHECK (ReportDate <= CURRENT_DATE),
     ADD CONSTRAINT CHK_Resolved_Logic CHECK (Resolved IN (TRUE, FALSE));
+    
 
 -- Customer Constraints
 ALTER TABLE Customer
