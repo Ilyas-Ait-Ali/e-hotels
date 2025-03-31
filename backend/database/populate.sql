@@ -184,6 +184,12 @@ BEGIN
     END LOOP;
 END $$;
 
+UPDATE Room
+SET Extendable = CASE 
+    WHEN Capacity = 'single' THEN FALSE
+    ELSE TRUE
+END;
+
 -- Populate Room Amenities
 DO $$
 DECLARE
