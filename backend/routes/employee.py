@@ -10,22 +10,34 @@ def employee_dashboard():
     if 'user_type' not in session or session['user_type'] != 'employee':
         return redirect(url_for('auth.login'))
 
-    results = db.session.execute(text("""
+    position = session.get('position')
+    hotel_id = session.get('hotel_id')
+
+    base_query = """
         SELECT b.BookingID, b.CheckInDate, b.CheckOutDate, b.Status,
-            b.RoomID, h.HotelName, c.FullName AS CustomerName
+               b.RoomID, h.HotelName, c.FullName AS CustomerName, b.HotelID
         FROM Booking b
         JOIN Hotel h ON b.HotelID = h.HotelID
         JOIN Customer c ON b.CustomerID = c.CustomerID
         WHERE b.Status IN ('Pending', 'Confirmed')
-        AND b.CheckInDate >= CURRENT_DATE
-        AND NOT EXISTS (
-            SELECT 1 FROM Rental r WHERE r.BookingID = b.BookingID
-        )
-        ORDER BY b.CheckInDate
-    """)).fetchall()
+          AND b.CheckInDate >= CURRENT_DATE
+          AND NOT EXISTS (
+              SELECT 1 FROM Rental r WHERE r.BookingID = b.BookingID
+          )
+    """
 
+    params = {}
+    if position != 'Admin':
+        base_query += " AND b.HotelID = :hid"
+        params['hid'] = hotel_id
+
+    base_query += " ORDER BY b.CheckInDate"
+
+    results = db.session.execute(text(base_query), params).fetchall()
 
     return render_template("employee/dashboard.html", bookings=results)
+
+
 
 
 
@@ -37,10 +49,12 @@ def convert_booking():
         flash("You must be logged in as an employee.")
         return redirect(url_for('auth.login'))
 
+    position = session.get('position')
+    hotel_id = session.get('hotel_id')  
+    employee_id = session.get('user_id')
     booking_id = request.form.get('booking_id')
 
     try:
-        
         booking = db.session.execute(text("""
             SELECT * FROM Booking WHERE BookingID = :bid
         """), {'bid': booking_id}).fetchone()
@@ -50,11 +64,14 @@ def convert_booking():
             return redirect(url_for('employee.employee_dashboard'))
 
         
+        if position != 'Admin' and booking.hotelid != hotel_id:
+            flash("❌ You are not authorized to convert bookings from other hotels.")
+            return redirect(url_for('employee.employee_dashboard'))
+
         db.session.execute(text("""
             UPDATE Booking SET Status = 'Confirmed' WHERE BookingID = :bid
         """), {'bid': booking_id})
 
-        
         db.session.execute(text("""
             INSERT INTO Rental (
                 CustomerID, HotelID, RoomID, EmployeeID, BookingID,
@@ -68,7 +85,7 @@ def convert_booking():
             'cid': booking.customerid,
             'hid': booking.hotelid,
             'rid': booking.roomid,
-            'eid': session['user_id'],
+            'eid': employee_id,
             'bid': booking.bookingid,
             'checkin': booking.checkindate,
             'checkout': booking.checkoutdate

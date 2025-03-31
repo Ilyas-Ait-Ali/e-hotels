@@ -39,7 +39,7 @@
 
                 {% elif session.user_type == 'employee' %}
                 <li class="nav-item">
-                    <a class="nav-link {% if request.path.startswith('/employee/dashboard') %}active{% endif %}" href="{{ url_for('employee.employee_dashboard') }}">Dashboard</a>
+                    <a class="nav-link {% if request.path.startswith('/employee/dashboard') %}active{% endif %}" href="{{ url_for('employee.employee_dashboard') }}">Convert to Booking</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link {% if request.path == '/employee/rent-room' %}active{% endif %}" href="{{ url_for('employee.rent_room') }}">Rent Room</a>
