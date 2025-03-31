@@ -37,12 +37,6 @@ def employee_dashboard():
 
     return render_template("employee/dashboard.html", bookings=results)
 
-
-
-
-
-
-
 @bp_employee.route('/employee/convert-booking', methods=['POST'])
 def convert_booking():
     if 'user_type' not in session or session['user_type'] != 'employee':
@@ -99,9 +93,6 @@ def convert_booking():
         flash(f"❌ Failed to convert booking: {e}")
 
     return redirect(url_for('employee.employee_dashboard'))
-
-
-
 
 @bp_employee.route('/employee/rent-room', methods=['GET', 'POST'])
 def rent_room():
@@ -186,9 +177,6 @@ def rent_room():
 
     return render_template("employee/rent_form.html", is_admin=(position == "Admin"))
 
-
-
-
 @bp_employee.route('/employee/customers')
 def manage_customers():
     if 'user_type' not in session or session['user_type'] != 'employee' or session.get('position') != 'Admin':
@@ -200,10 +188,6 @@ def manage_customers():
     """)).fetchall()
 
     return render_template("employee/customers.html", customers=customers)
-
-
-
-
 
 @bp_employee.route('/employee/customers/add', methods=['GET', 'POST'])
 def add_customer():
@@ -237,8 +221,6 @@ def add_customer():
             flash(f"❌ Failed to add customer: {e}")
 
     return render_template("employee/customer_form.html", customer=None)
-
-
 
 @bp_employee.route('/employee/customers/edit/<int:customer_id>', methods=['GET', 'POST'])
 def edit_customer(customer_id):
@@ -284,8 +266,6 @@ def edit_customer(customer_id):
 
     return render_template("employee/customer_form.html", customer=customer)
 
-
-
 @bp_employee.route('/employee/customers/delete/<int:customer_id>', methods=['POST'])
 def delete_customer(customer_id):
     if 'user_type' not in session or session['user_type'] != 'employee' or session.get('position') != 'Admin':
@@ -301,10 +281,6 @@ def delete_customer(customer_id):
         flash(f"❌ Failed to delete customer: {e}")
 
     return redirect(url_for('employee.manage_customers'))
-
-
-
-
 
 @bp_employee.route('/employee/employees')
 def manage_employees():
@@ -334,8 +310,6 @@ def manage_employees():
         return redirect(url_for('employee.employee_dashboard'))
 
     return render_template("employee/employees.html", employees=employees)
-
-
 
 @bp_employee.route('/employee/employees/add', methods=['GET', 'POST'])
 def add_employee():
@@ -386,8 +360,6 @@ def add_employee():
             flash(f"❌ Failed to add employee: {e}")
 
     return render_template("employee/employee_form.html", mode="add", employee=None)
-
-
 
 @bp_employee.route('/employee/employees/edit/<int:employee_id>', methods=['GET', 'POST'])
 def edit_employee(employee_id):
@@ -463,8 +435,6 @@ def edit_employee(employee_id):
 
     return render_template("employee/employee_form.html", mode='edit', employee=employee)
 
-
-
 @bp_employee.route('/employee/employees/delete/<int:employee_id>', methods=['POST'])
 def delete_employee(employee_id):
     if 'user_type' not in session or session['user_type'] != 'employee':
@@ -489,8 +459,6 @@ def delete_employee(employee_id):
     elif position == 'Manager' and employee.employeeid == session['user_id']:
         flash("⚠️ You cannot delete your own account.")
         return redirect(url_for('employee.manage_employees'))
-    
-
 
     # Manager restrictions
     if position == 'Manager':
@@ -507,10 +475,6 @@ def delete_employee(employee_id):
         flash(f"❌ Failed to delete employee: {e}")
 
     return redirect(url_for('employee.manage_employees'))
-
-
-
-
 
 @bp_employee.route('/employee/hotels')
 def manage_hotels():
@@ -651,9 +615,6 @@ def edit_hotel(hotel_id):
             flash(f"❌ Failed to update hotel: {e}")
 
     return render_template("employee/hotel_form.html", mode='edit', hotel=hotel, hotel_chains=hotel_chains)
-
-
-
 
 @bp_employee.route('/employee/hotels/delete/<int:hotel_id>', methods=['POST'])
 def delete_hotel(hotel_id):

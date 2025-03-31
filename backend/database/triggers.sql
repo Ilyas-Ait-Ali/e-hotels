@@ -422,6 +422,7 @@ DROP FUNCTION IF EXISTS prevent_overlapping_rental CASCADE;
 
 CREATE OR REPLACE FUNCTION prevent_overlapping_rental() RETURNS TRIGGER AS $$
 BEGIN
+    -- Check for overlapping bookings, excluding the current one if provided
     IF EXISTS (
         SELECT 1 FROM Booking
         WHERE HotelID = NEW.HotelID AND RoomID = NEW.RoomID
@@ -429,6 +430,7 @@ BEGIN
           AND (
               NEW.CheckInDate < CheckOutDate AND NEW.CheckOutDate > CheckInDate
           )
+          AND (BookingID IS DISTINCT FROM NEW.BookingID)  -- Exclude the one being converted
     ) OR EXISTS (
         SELECT 1 FROM Rental
         WHERE HotelID = NEW.HotelID AND RoomID = NEW.RoomID
