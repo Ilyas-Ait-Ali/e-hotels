@@ -521,6 +521,27 @@ def add_hotel():
         num_rooms = request.form.get('num_rooms')
         rating = request.form.get('rating')
 
+        valid_categories = ['Luxury', 'Resort', 'Boutique']
+
+        try:
+            hotel_chain_id = int(hotel_chain_id)
+            num_rooms = int(num_rooms)
+            rating = int(rating)
+
+            if num_rooms < 0:
+                flash("❌ Number of rooms must be non-negative.")
+                return redirect(url_for('employee.add_hotel'))
+            if rating < 1 or rating > 5:
+                flash("❌ Rating must be between 1 and 5.")
+                return redirect(url_for('employee.add_hotel'))
+            if category not in valid_categories:
+                flash("❌ Invalid category.")
+                return redirect(url_for('employee.add_hotel'))
+
+        except (ValueError, TypeError):
+            flash("❌ Invalid input: ensure all numeric fields are filled correctly.")
+            return redirect(url_for('employee.add_hotel'))
+
         try:
             db.session.execute(text("""
                 INSERT INTO Hotel (HotelName, Address, HotelChainID, Category, Num_Rooms, Rating)
@@ -543,7 +564,6 @@ def add_hotel():
 
     return render_template("employee/hotel_form.html", mode="add", hotel_chains=hotel_chains)
 
-
 @bp_employee.route('/employee/hotels/edit/<int:hotel_id>', methods=['GET', 'POST'])
 def edit_hotel(hotel_id):
     if 'user_type' not in session or session['user_type'] != 'employee' or session.get('position') != 'Admin':
@@ -551,7 +571,6 @@ def edit_hotel(hotel_id):
         return redirect(url_for('auth.login'))
 
     hotel = db.session.execute(text("SELECT * FROM Hotel WHERE HotelID = :hid"), {'hid': hotel_id}).fetchone()
-
     if not hotel:
         flash("❌ Hotel not found.")
         return redirect(url_for('employee.manage_hotels'))
@@ -565,6 +584,27 @@ def edit_hotel(hotel_id):
         category = request.form.get('category')
         num_rooms = request.form.get('num_rooms')
         rating = request.form.get('rating')
+
+        valid_categories = ['Luxury', 'Resort', 'Boutique']
+
+        try:
+            hotel_chain_id = int(hotel_chain_id)
+            num_rooms = int(num_rooms)
+            rating = int(rating)
+
+            if num_rooms < 0:
+                flash("❌ Number of rooms must be non-negative.")
+                return redirect(url_for('employee.edit_hotel', hotel_id=hotel_id))
+            if rating < 1 or rating > 5:
+                flash("❌ Rating must be between 1 and 5.")
+                return redirect(url_for('employee.edit_hotel', hotel_id=hotel_id))
+            if category not in valid_categories:
+                flash("❌ Invalid category.")
+                return redirect(url_for('employee.edit_hotel', hotel_id=hotel_id))
+
+        except (ValueError, TypeError):
+            flash("❌ Invalid input: ensure all numeric fields are filled correctly.")
+            return redirect(url_for('employee.edit_hotel', hotel_id=hotel_id))
 
         try:
             db.session.execute(text("""
@@ -588,11 +628,13 @@ def edit_hotel(hotel_id):
             db.session.commit()
             flash("✅ Hotel updated successfully.")
             return redirect(url_for('employee.manage_hotels'))
+
         except Exception as e:
             db.session.rollback()
             flash(f"❌ Failed to update hotel: {e}")
 
     return render_template("employee/hotel_form.html", mode='edit', hotel=hotel, hotel_chains=hotel_chains)
+
 
 
 
@@ -653,7 +695,17 @@ def add_room():
         return redirect(url_for('employee.employee_dashboard'))
 
     if request.method == 'POST':
-        hotel_id_input = int(request.form.get('hotel_id'))
+        try:
+            hotel_id_input = int(request.form.get('hotel_id'))
+            price = float(request.form.get('price'))
+        except (TypeError, ValueError):
+            flash("❌ Invalid input for hotel ID or price.")
+            return redirect(url_for('employee.add_room'))
+
+        if price < 0:
+            flash("❌ Price cannot be negative.")
+            return redirect(url_for('employee.add_room'))
+
         if position == 'Manager' and hotel_id_input != hotel_id:
             flash("❌ You can only add rooms to your own hotel.")
             return redirect(url_for('employee.add_room'))
@@ -661,8 +713,15 @@ def add_room():
         capacity = request.form.get('capacity')
         viewtype = request.form.get('viewtype')
         extendable = request.form.get('extendable') == 'true'
-        price = request.form.get('price')
         status = request.form.get('status')
+
+        valid_capacities = ['single', 'double', 'triple', 'family', 'suite']
+        valid_views = ['none', 'mountain_view', 'sea_view', 'both']
+        valid_statuses = ['Available', 'Occupied', 'Out-Of-Order']
+
+        if capacity not in valid_capacities or viewtype not in valid_views or status not in valid_statuses:
+            flash("❌ Invalid input selection.")
+            return redirect(url_for('employee.add_room'))
 
         try:
             db.session.execute(text("""
@@ -687,6 +746,7 @@ def add_room():
     return render_template("employee/room_form.html", mode='add')
 
 
+
 @bp_employee.route('/employee/rooms/edit/<int:room_id>', methods=['GET', 'POST'])
 def edit_room(room_id):
     if 'user_type' not in session or session['user_type'] != 'employee':
@@ -705,7 +765,17 @@ def edit_room(room_id):
         return redirect(url_for('employee.manage_rooms'))
 
     if request.method == 'POST':
-        hotel_id_input = int(request.form.get('hotel_id'))
+        try:
+            hotel_id_input = int(request.form.get('hotel_id'))
+            price = float(request.form.get('price'))
+        except (TypeError, ValueError):
+            flash("❌ Invalid input for hotel ID or price.")
+            return redirect(url_for('employee.edit_room', room_id=room_id))
+
+        if price < 0:
+            flash("❌ Price cannot be negative.")
+            return redirect(url_for('employee.edit_room', room_id=room_id))
+
         if position == 'Manager' and hotel_id_input != hotel_id:
             flash("❌ You cannot reassign a room to another hotel.")
             return redirect(url_for('employee.edit_room', room_id=room_id))
@@ -713,8 +783,15 @@ def edit_room(room_id):
         capacity = request.form.get('capacity')
         viewtype = request.form.get('viewtype')
         extendable = request.form.get('extendable') == 'true'
-        price = request.form.get('price')
         status = request.form.get('status')
+
+        valid_capacities = ['single', 'double', 'triple', 'family', 'suite']
+        valid_views = ['none', 'mountain_view', 'sea_view', 'both']
+        valid_statuses = ['Available', 'Occupied', 'Out-Of-Order']
+
+        if capacity not in valid_capacities or viewtype not in valid_views or status not in valid_statuses:
+            flash("❌ Invalid input selection.")
+            return redirect(url_for('employee.edit_room', room_id=room_id))
 
         try:
             db.session.execute(text("""
@@ -744,6 +821,7 @@ def edit_room(room_id):
             flash(f"❌ Failed to update room: {e}")
 
     return render_template("employee/room_form.html", mode='edit', room=room)
+
 
 
 
@@ -811,16 +889,25 @@ def add_room_problem():
     hotel_id = session.get('hotel_id') if position == 'Manager' else None
 
     if request.method == 'POST':
-        hotel_id_form = request.form.get('hotel_id')
-        room_id = request.form.get('room_id')
-        problem = request.form.get('problem')
-        report_date = request.form.get('report_date')
-
-        if position == 'Manager' and str(hotel_id) != hotel_id_form:
-            flash("⚠️ Managers can only report problems for their own hotel.")
-            return redirect(url_for('employee.manage_room_problems'))
-
         try:
+            hotel_id_form = int(request.form.get('hotel_id'))
+            room_id = int(request.form.get('room_id'))
+            problem = request.form.get('problem', '').strip()
+            report_date = request.form.get('report_date')
+
+            if hotel_id_form < 1 or room_id < 1:
+                raise ValueError("Hotel ID and Room ID must be positive.")
+
+            if not problem:
+                raise ValueError("Problem description cannot be empty.")
+
+            if date.fromisoformat(report_date) > date.today():
+                raise ValueError("Report date cannot be in the future.")
+
+            if position == 'Manager' and hotel_id != hotel_id_form:
+                flash("⚠️ Managers can only report problems for their own hotel.")
+                return redirect(url_for('employee.manage_room_problems'))
+
             db.session.execute(text("""
                 INSERT INTO RoomProblems (HotelID, RoomID, Problem, ReportDate, Resolved)
                 VALUES (:hid, :rid, :prob, :rdate, FALSE)
@@ -838,7 +925,7 @@ def add_room_problem():
             db.session.rollback()
             flash(f"❌ Failed to add room problem: {e}")
 
-    return render_template("employee/room_problem_form.html", mode='add', hotel_id=hotel_id)
+    return render_template("employee/room_problem_form.html", mode='add', hotel_id=hotel_id, current_date=date.today().isoformat())
 
 
 @bp_employee.route('/employee/problems/edit/<int:room_id>/<path:problem>', methods=['GET', 'POST'])
@@ -862,11 +949,17 @@ def edit_room_problem(room_id, problem):
         return redirect(url_for('employee.manage_room_problems'))
 
     if request.method == 'POST':
-        new_problem = request.form.get('problem')
-        report_date = request.form.get('report_date')
-        resolved = request.form.get('resolved') == 'true'
-
         try:
+            new_problem = request.form.get('problem', '').strip()
+            report_date = request.form.get('report_date')
+            resolved = request.form.get('resolved') == 'true'
+
+            if not new_problem:
+                raise ValueError("Problem description cannot be empty.")
+
+            if date.fromisoformat(report_date) > date.today():
+                raise ValueError("Report date cannot be in the future.")
+
             db.session.execute(text("""
                 UPDATE RoomProblems
                 SET Problem = :new_prob, ReportDate = :rdate, Resolved = :resolved
@@ -882,11 +975,13 @@ def edit_room_problem(room_id, problem):
             db.session.commit()
             flash("✅ Room problem updated.")
             return redirect(url_for('employee.manage_room_problems'))
+
         except Exception as e:
             db.session.rollback()
             flash(f"❌ Update failed: {e}")
 
-    return render_template("employee/room_problem_form.html", mode='edit', problem_data=room_problem)
+    return render_template("employee/room_problem_form.html", mode='edit', problem_data=room_problem, current_date=date.today().isoformat())
+
 
 
 @bp_employee.route('/employee/problems/delete/<int:room_id>/<path:problem>', methods=['POST'])
