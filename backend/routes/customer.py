@@ -151,7 +151,13 @@ def book_room():
 
     except Exception as e:
         db.session.rollback()
-        flash(f"❌ Booking failed: {e}")
+        error_msg = str(e).lower()
+        if 'unresolved problems' in error_msg:
+            flash("❌ Cannot book this room because it has unresolved issues.")
+        elif '5 or more active bookings' in error_msg:
+            flash("❌ You already have 5 or more active bookings.")
+        else:
+            flash(f"❌ Booking failed: {e}")
         return redirect(url_for('customer.search_rooms'))
 
 
