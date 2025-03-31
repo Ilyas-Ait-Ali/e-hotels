@@ -38,6 +38,18 @@
                 <li class="nav-item">
                     <a class="nav-link {% if request.path == '/employee/rent-room' %}active{% endif %}" href="{{ url_for('employee.rent_room') }}">Rent Room</a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.path == '/employee/bookings' %}active{% endif %}" href="{{ url_for('employee.view_bookings') }}">Manage Bookings</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.path == '/employee/bookings/archive' %}active{% endif %}" href="{{ url_for('employee.view_booking_archive') }}">Booking Archive</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.path == '/employee/rentals' %}active{% endif %}" href="{{ url_for('employee.view_rentals') }}">Manage Rentals</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.path == '/employee/rentals/archive' %}active{% endif %}" href="{{ url_for('employee.view_rental_archive') }}">Rental Archive</a>
+                </li>
             
                 {% if session.position == 'Admin' or session.position == 'Manager' %}
                     <li class="nav-item">
