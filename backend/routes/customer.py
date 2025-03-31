@@ -244,12 +244,26 @@ def view_all_hotels():
     if 'user_type' not in session or session['user_type'] != 'customer':
         return redirect(url_for('auth.login'))
 
-    query = text("""
+    sort = request.args.get('sort', 'rating_desc')
+
+    sort_map = {
+        'name_asc': 'h.HotelName ASC',
+        'name_desc': 'h.HotelName DESC',
+        'rating_asc': 'h.Rating ASC',
+        'rating_desc': 'h.Rating DESC',
+        'chain': 'hc.ChainName ASC',
+        'category': 'h.Category ASC'
+    }
+
+    order_by = sort_map.get(sort, 'h.Rating DESC')
+
+    query = text(f"""
         SELECT h.HotelID, h.HotelName, h.Address, h.Category, h.Rating, hc.ChainName
         FROM Hotel h
         JOIN HotelChain hc ON h.HotelChainID = hc.HotelChainID
-        ORDER BY h.Rating DESC, h.HotelName
+        ORDER BY {order_by}
     """)
     hotels = db.session.execute(query).fetchall()
 
-    return render_template('customer/view_hotels.html', hotels=hotels)
+    return render_template('customer/view_hotels.html', hotels=hotels, sort=sort)
+

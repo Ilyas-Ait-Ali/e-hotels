@@ -4,6 +4,22 @@
 {% block content %}
 <h2>🏨 All Hotels</h2>
 
+<form method="GET" class="mb-3 row g-2 align-items-center">
+    <div class="col-auto">
+        <label for="sort" class="form-label">Sort By:</label>
+    </div>
+    <div class="col-auto">
+        <select name="sort" id="sort" class="form-select" onchange="this.form.submit()">
+            <option value="rating_desc" {% if sort == 'rating_desc' %}selected{% endif %}>⭐ Rating (High to Low)</option>
+            <option value="rating_asc" {% if sort == 'rating_asc' %}selected{% endif %}>⭐ Rating (Low to High)</option>
+            <option value="name_asc" {% if sort == 'name_asc' %}selected{% endif %}>🏨 Hotel Name (A-Z)</option>
+            <option value="name_desc" {% if sort == 'name_desc' %}selected{% endif %}>🏨 Hotel Name (Z-A)</option>
+            <option value="chain" {% if sort == 'chain' %}selected{% endif %}>🔗 Chain Name</option>
+            <option value="category" {% if sort == 'category' %}selected{% endif %}>🏷 Category</option>
+        </select>
+    </div>
+</form>
+
 {% if hotels %}
 <table class="table table-bordered table-hover">
     <thead class="table-light">
