@@ -261,10 +261,58 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Create trigger
 CREATE TRIGGER trg_prevent_room_deletion
 BEFORE DELETE ON Room
 FOR EACH ROW
 EXECUTE FUNCTION prevent_deleting_active_rooms();
 
+-- Trigger function to set room status to 'Out-of-Order' when a problem is reported and the room is currently available
+DROP TRIGGER IF EXISTS trg_mark_out_of_order ON RoomProblems;
+DROP FUNCTION IF EXISTS mark_out_of_order_if_available CASCADE;
 
+CREATE OR REPLACE FUNCTION mark_out_of_order_if_available() RETURNS TRIGGER AS $$
+BEGIN
+    -- Only affect rooms that are currently Available
+    IF EXISTS (
+        SELECT 1 FROM Room
+        WHERE HotelID = NEW.HotelID AND RoomID = NEW.RoomID AND Status = 'Available'
+    ) THEN
+        UPDATE Room
+        SET Status = 'Out-of-Order'
+        WHERE HotelID = NEW.HotelID AND RoomID = NEW.RoomID;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_mark_out_of_order
+AFTER INSERT ON RoomProblems
+FOR EACH ROW
+EXECUTE FUNCTION mark_out_of_order_if_available();
+
+-- Trigger function to restore room status to 'Available' when all problems for the room are resolved
+DROP TRIGGER IF EXISTS trg_restore_available_status ON RoomProblems;
+DROP FUNCTION IF EXISTS restore_status_if_all_resolved CASCADE;
+
+CREATE OR REPLACE FUNCTION restore_status_if_all_resolved() RETURNS TRIGGER AS $$
+BEGIN
+    -- If all problems for this room are resolved, mark room as Available
+    IF NOT EXISTS (
+        SELECT 1 FROM RoomProblems
+        WHERE HotelID = NEW.HotelID AND RoomID = NEW.RoomID AND Resolved = FALSE
+    ) THEN
+        UPDATE Room
+        SET Status = 'Available'
+        WHERE HotelID = NEW.HotelID AND RoomID = NEW.RoomID;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_restore_available_status
+AFTER UPDATE OF Resolved ON RoomProblems
+FOR EACH ROW
+WHEN (NEW.Resolved = TRUE)
+EXECUTE FUNCTION restore_status_if_all_resolved();
