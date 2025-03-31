@@ -159,41 +159,24 @@ def rent_room():
 
 @bp_employee.route('/employee/customers')
 def manage_customers():
-    if 'user_type' not in session or session['user_type'] != 'employee':
-        return redirect(url_for('auth.login'))
-
-    position = session.get('position')
-    hotel_id = session.get('hotel_id')
-
-    if position == 'Admin':
-        customers = db.session.execute(text("""
-            SELECT * FROM Customer ORDER BY FullName
-        """)).fetchall()
-    elif position == 'Manager':
-        customers = db.session.execute(text("""
-            SELECT DISTINCT c.*
-            FROM Customer c
-            LEFT JOIN Booking b ON c.CustomerID = b.CustomerID
-            LEFT JOIN Rental r ON c.CustomerID = r.CustomerID
-            WHERE b.HotelID = :hotel_id OR r.HotelID = :hotel_id
-            ORDER BY c.FullName
-        """), {'hotel_id': hotel_id}).fetchall()
-    else:
-        flash("❌ Access denied.")
+    if 'user_type' not in session or session['user_type'] != 'employee' or session.get('position') != 'Admin':
+        flash("❌ Only admins can manage customers.")
         return redirect(url_for('employee.employee_dashboard'))
+
+    customers = db.session.execute(text("""
+        SELECT * FROM Customer ORDER BY FullName
+    """)).fetchall()
 
     return render_template("employee/customers.html", customers=customers)
 
 
 
 
+
 @bp_employee.route('/employee/customers/add', methods=['GET', 'POST'])
 def add_customer():
-    if 'user_type' not in session or session['user_type'] != 'employee':
-        return redirect(url_for('auth.login'))
-
-    if session.get('position') not in ['Admin', 'Manager']:
-        flash("❌ Access denied.")
+    if 'user_type' not in session or session['user_type'] != 'employee' or session.get('position') != 'Admin':
+        flash("❌ Only admins can add customers.")
         return redirect(url_for('employee.employee_dashboard'))
 
     if request.method == 'POST':
@@ -224,10 +207,12 @@ def add_customer():
     return render_template("employee/customer_form.html", customer=None)
 
 
+
 @bp_employee.route('/employee/customers/edit/<int:customer_id>', methods=['GET', 'POST'])
 def edit_customer(customer_id):
-    if 'user_type' not in session or session['user_type'] != 'employee':
-        return redirect(url_for('auth.login'))
+    if 'user_type' not in session or session['user_type'] != 'employee' or session.get('position') != 'Admin':
+        flash("❌ Only admins can edit customers.")
+        return redirect(url_for('employee.employee_dashboard'))
 
     customer = db.session.execute(text("""
         SELECT * FROM Customer WHERE CustomerID = :cid
@@ -236,21 +221,6 @@ def edit_customer(customer_id):
     if not customer:
         flash("❌ Customer not found.")
         return redirect(url_for('employee.manage_customers'))
-
-    # Manager permission check
-    if session.get('position') == 'Manager':
-        access = db.session.execute(text("""
-            SELECT 1
-            FROM Booking WHERE CustomerID = :cid AND HotelID = :hid
-            UNION
-            SELECT 1
-            FROM Rental WHERE CustomerID = :cid AND HotelID = :hid
-            LIMIT 1
-        """), {'cid': customer_id, 'hid': session['hotel_id']}).fetchone()
-
-        if not access:
-            flash("❌ You do not have permission to edit this customer.")
-            return redirect(url_for('employee.manage_customers'))
 
     if request.method == 'POST':
         full_name = request.form['full_name']
@@ -286,23 +256,9 @@ def edit_customer(customer_id):
 
 @bp_employee.route('/employee/customers/delete/<int:customer_id>', methods=['POST'])
 def delete_customer(customer_id):
-    if 'user_type' not in session or session['user_type'] != 'employee':
-        return redirect(url_for('auth.login'))
-
-    # Manager permission check
-    if session.get('position') == 'Manager':
-        access = db.session.execute(text("""
-            SELECT 1
-            FROM Booking WHERE CustomerID = :cid AND HotelID = :hid
-            UNION
-            SELECT 1
-            FROM Rental WHERE CustomerID = :cid AND HotelID = :hid
-            LIMIT 1
-        """), {'cid': customer_id, 'hid': session['hotel_id']}).fetchone()
-
-        if not access:
-            flash("❌ You do not have permission to delete this customer.")
-            return redirect(url_for('employee.manage_customers'))
+    if 'user_type' not in session or session['user_type'] != 'employee' or session.get('position') != 'Admin':
+        flash("❌ Only admins can delete customers.")
+        return redirect(url_for('employee.employee_dashboard'))
 
     try:
         db.session.execute(text("DELETE FROM Customer WHERE CustomerID = :cid"), {'cid': customer_id})
@@ -313,6 +269,7 @@ def delete_customer(customer_id):
         flash(f"❌ Failed to delete customer: {e}")
 
     return redirect(url_for('employee.manage_customers'))
+
 
 
 
