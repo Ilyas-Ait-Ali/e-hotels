@@ -37,7 +37,7 @@
 
     <div class="mb-3">
         <label class="form-label">Number of Rooms</label>
-        <input type="number" name="num_rooms" class="form-control" value="{{ hotel.num_rooms if mode == 'edit' else '' }}" min="0" required>
+        <input type="number" name="num_rooms" class="form-control" value="{{ hotel.num_rooms if mode == 'edit' else '' }}" min="1" required>
     </div>    
 
     <div class="mb-3">

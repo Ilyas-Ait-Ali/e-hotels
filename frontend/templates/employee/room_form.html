@@ -18,7 +18,7 @@
     <div class="mb-3">
         <label class="form-label">Capacity</label>
         <select name="capacity" class="form-select" required>
-            <option value="">Select...</option>
+            <option value="" disabled selected>Select a capacity...</option>
             {% for c in ['single', 'double', 'triple', 'family', 'suite'] %}
                 <option value="{{ c }}" {% if room and room.capacity == c %}selected{% endif %}>{{ c.capitalize() }}</option>
             {% endfor %}
@@ -28,7 +28,7 @@
     <div class="mb-3">
         <label class="form-label">View Type</label>
         <select name="viewtype" class="form-select" required>
-            <option value="">Select...</option>
+            <option value="" disabled selected>Select a view...</option>
             <option value="none" {% if room and room.viewtype == 'none' %}selected{% endif %}>None</option>
             <option value="mountain_view" {% if room and room.viewtype == 'mountain_view' %}selected{% endif %}>Mountain View</option>
             <option value="sea_view" {% if room and room.viewtype == 'sea_view' %}selected{% endif %}>Sea View</option>
@@ -39,7 +39,7 @@
     <div class="mb-3">
         <label class="form-label">Extendable</label>
         <select name="extendable" class="form-select" required>
-            <option value="">Select...</option>
+            <option value="" disabled selected>Is the room extendable?</option>
             <option value="true" {% if room and room.extendable in [True, 't', 'true'] %}selected{% endif %}>Yes</option>
             <option value="false" {% if room and room.extendable in [False, 'f', 'false'] %}selected{% endif %}>No</option>
         </select>
@@ -53,6 +53,7 @@
     <div class="mb-3">
         <label class="form-label">Status</label>
         <select name="status" class="form-select" required>
+            <option value="" disabled selected>Select a status...</option>
             {% for status in ['Available', 'Occupied', 'Out-Of-Order'] %}
                 <option value="{{ status }}" {% if room and room.status == status %}selected{% endif %}>{{ status }}</option>
             {% endfor %}

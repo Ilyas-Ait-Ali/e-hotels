@@ -11,17 +11,17 @@
     </div>
     <div class="mb-3">
         <label class="form-label">Customer ID</label>
-        <input type="number" name="customer_id" class="form-control" required>
+        <input type="number" name="customer_id" class="form-control" min="1" required>
     </div>    
     {% if is_admin %}
     <div class="mb-3">
         <label class="form-label">Hotel ID</label>
-        <input type="number" name="hotel_id" class="form-control" required>
+        <input type="number" name="hotel_id" class="form-control" min="1" required>
     </div>
     {% endif %}
     <div class="mb-3">
         <label class="form-label">Room ID</label>
-        <input type="number" name="room_id" class="form-control" required>
+        <input type="number" name="room_id" class="form-control" min="1" required>
     </div>
 
     <div class="mb-3">
@@ -36,13 +36,13 @@
 
     <div class="mb-3">
         <label class="form-label">Payment Amount ($)</label>
-        <input type="number" name="payment_amount" class="form-control" step="0.01" required>
+        <input type="number" name="payment_amount" class="form-control" step="0.01" min="0" required>
     </div>
 
     <div class="mb-3">
         <label class="form-label">Payment Method</label>
         <select name="payment_method" class="form-select" required>
-            <option value="">Select...</option>
+            <option value="" disabled selected>Select a payment method...</option>
             <option value="Cash">Cash</option>
             <option value="Credit Card">Credit Card</option>
             <option value="Debit Card">Debit Card</option>

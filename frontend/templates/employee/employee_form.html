@@ -33,13 +33,13 @@
 
     <div class="mb-3">
         <label class="form-label">SSN</label>
-        <input type="text" name="ssn" class="form-control" value="{{ employee.ssn if employee else '' }}" required>
+        <input type="text" name="ssn" class="form-control" pattern="\d{3}-\d{2}-\d{4}" title="Format: XXX-XX-XXXX" value="{{ employee.ssn if employee else '' }}" required>
     </div>
 
     {% if session['position'] == 'Admin' %}
         <div class="mb-3">
             <label class="form-label">Hotel ID</label>
-            <input type="number" name="hotel_id" class="form-control" value="{{ employee.hotelid if employee else '' }}" required>
+            <input type="number" name="hotel_id" class="form-control" min="1" value="{{ employee.hotelid if employee else '' }}" required>
         </div>
     {% else %}
         <input type="hidden" name="hotel_id" value="{{ session['hotel_id'] }}">

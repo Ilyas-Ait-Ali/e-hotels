@@ -10,8 +10,8 @@
     <input type="hidden" name="checkout" value="{{ checkout }}">
 
     <label for="customer_id">Enter Customer ID:</label>
-    <input type="number" name="customer_id" required><br><br>
-
+    <input type="number" name="customer_id" min="1" required>
+    
     <button type="submit">Confirm Booking</button>
 </form>
 {% endblock %}
