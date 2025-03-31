@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}Archived Rentals{% endblock %}
+
+{% block content %}
+<h2>📦 Archived Rentals</h2>
+
+{% if rentals %}
+<table class="table table-bordered table-hover">
+    <thead class="table-dark">
+        <tr>
+            <th>Rental ID</th>
+            <th>Customer</th>
+            <th>Hotel</th>
+            <th>Room</th>
+            <th>Employee</th>
+            <th>Booking ID</th>
+            <th>Check-In</th>
+            <th>Check-Out</th>
+            <th>Status</th>
+            <th>Payment</th>
+            <th>Method</th>
+            <th>Archived</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for r in rentals %}
+        <tr>
+            <td>{{ r.rentalid }}</td>
+            <td>{{ r.customername }}</td>
+            <td>{{ r.hotelname }}</td>
+            <td>{{ r.roomidentifier }}</td>
+            <td>{{ r.employeename }}</td>
+            <td>{{ r.bookingid }}</td>
+            <td>{{ r.checkindate }}</td>
+            <td>{{ r.checkoutdate }}</td>
+            <td>{{ r.status }}</td>
+            <td>{{ r.paymentamount }}</td>
+            <td>{{ r.paymentmethod }}</td>
+            <td>{{ r.archivedate }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="alert alert-info">No archived rentals found.</div>
+{% endif %}
+{% endblock %}
