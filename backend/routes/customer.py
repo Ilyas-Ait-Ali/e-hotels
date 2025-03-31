@@ -176,3 +176,19 @@ def cancel_booking():
         flash(f"❌ Failed to cancel booking: {e}")
 
     return redirect(url_for('customer.my_bookings'))
+
+@bp_customer.route('/customer/rentings')
+def my_rentings():
+    if 'user_type' not in session or session['user_type'] != 'customer':
+        return redirect(url_for('auth.login'))
+
+    customer_id = session['user_id']
+    rentings = db.session.execute(text("""
+        SELECT r.*, h.HotelName, h.Address
+        FROM Rental r
+        JOIN Hotel h ON r.HotelID = h.HotelID
+        WHERE r.CustomerID = :cid
+        ORDER BY r.CheckInDate DESC
+    """), {'cid': customer_id}).fetchall()
+
+    return render_template("customer/my_rentings.html", rentings=rentings)

@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block title %}My Rentings{% endblock %}
+
+{% block content %}
+<h2>📄 My Rentings</h2>
+
+{% if session.user_name %}
+<p>Welcome, <strong>{{ session.user_name }}</strong>!</p>
+{% endif %}
+
+{% if rentings %}
+<table class="table table-striped table-bordered">
+    <thead class="table-light">
+        <tr>
+            <th>Hotel</th>
+            <th>Address</th>
+            <th>Room ID</th>
+            <th>Check-In</th>
+            <th>Check-Out</th>
+            <th>Status</th>
+            <th>Payment</th>
+            <th>Method</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for r in rentings %}
+        <tr>
+            <td>{{ r.hotelname }}</td>
+            <td>{{ r.address }}</td>
+            <td>{{ r.roomid }}</td>
+            <td>{{ r.checkindate }}</td>
+            <td>{{ r.checkoutdate }}</td>
+            <td>{{ r.status }}</td>
+            <td>${{ "%.2f"|format(r.paymentamount) }}</td>
+            <td>{{ r.paymentmethod }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="alert alert-info">You don't have any past rentings yet.</div>
+{% endif %}
+{% endblock %}
