@@ -41,7 +41,7 @@ def login():
             session['user_name'] = result[1]
             return redirect(url_for('customer.my_bookings'))
 
-        else:  # employee login
+        else:  
             if not selected_position:
                 return render_template('login.html', error="Please select a position.")
 
@@ -94,7 +94,6 @@ def register():
         if not full_name or not address or not id_type or not id_number:
             return render_template('register.html', error="Please fill in all fields.")
 
-
         existing = db.session.execute(text("""
             SELECT 1 FROM Customer WHERE LOWER(FullName) = :name AND IDNumber = :idnum
         """), {'name': full_name.lower(), 'idnum': id_number}).fetchone()
@@ -103,9 +102,11 @@ def register():
             return render_template('register.html', error="An account with that name and ID already exists.")
 
         try:
-            db.session.execute(text("""
+            
+            result = db.session.execute(text("""
                 INSERT INTO Customer (FullName, Address, IDType, IDNumber, RegistrationDate)
                 VALUES (:name, :address, :idtype, :idnum, :regdate)
+                RETURNING CustomerID
             """), {
                 'name': full_name,
                 'address': address,
@@ -113,15 +114,18 @@ def register():
                 'idnum': id_number,
                 'regdate': registration_date
             })
+
+            new_customer_id = result.fetchone()[0]
             db.session.commit()
-            flash("✅ Account created successfully. Please log in.")
-            return redirect(url_for('auth.login'))
+
+            return render_template('register_success.html', customer_id=new_customer_id, full_name=full_name)
 
         except Exception as e:
             db.session.rollback()
             return render_template('register.html', error=f"❌ Registration failed: {e}")
 
     return render_template('register.html')
+
 
 
 @bp_auth.route('/logout')
