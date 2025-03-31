@@ -344,6 +344,32 @@ AFTER INSERT ON RoomProblems
 FOR EACH ROW
 EXECUTE FUNCTION mark_room_out_of_order();
 
+-- Trigger: Restore room status when last unresolved problem is deleted
+DROP TRIGGER IF EXISTS trg_restore_status_on_delete ON RoomProblems;
+DROP FUNCTION IF EXISTS restore_status_after_problem_delete CASCADE;
+
+CREATE OR REPLACE FUNCTION restore_status_after_problem_delete() RETURNS TRIGGER AS $$
+BEGIN
+    -- If there are no unresolved problems left after deletion
+    IF NOT EXISTS (
+        SELECT 1 FROM RoomProblems
+        WHERE HotelID = OLD.HotelID AND RoomID = OLD.RoomID AND Resolved = FALSE
+    ) THEN
+        -- Restore the room to Available
+        UPDATE Room
+        SET Status = 'Available'
+        WHERE HotelID = OLD.HotelID AND RoomID = OLD.RoomID;
+    END IF;
+
+    RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_restore_status_on_delete
+AFTER DELETE ON RoomProblems
+FOR EACH ROW
+EXECUTE FUNCTION restore_status_after_problem_delete();
+
 -- Trigger function to prevent inserting a booking that overlaps with an existing booking or rental
 DROP TRIGGER IF EXISTS trg_prevent_overlapping_booking ON Booking;
 DROP FUNCTION IF EXISTS prevent_overlapping_booking CASCADE;
