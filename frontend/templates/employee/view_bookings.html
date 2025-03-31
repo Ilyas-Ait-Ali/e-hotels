@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}Manage Bookings{% endblock %}
+
+{% block content %}
+<h2>📅 Manage Bookings</h2>
+
+{% if bookings %}
+<table class="table table-bordered table-hover">
+    <thead class="table-dark">
+        <tr>
+            <th>Customer</th>
+            <th>Hotel</th>
+            <th>Room ID</th>
+            <th>Booking Date</th>
+            <th>Check-In</th>
+            <th>Check-Out</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for b in bookings %}
+        <tr>
+            <td>{{ b.customername }}</td>
+            <td>{{ b.hotelname }}</td>
+            <td>{{ b.roomid }}</td>
+            <td>{{ b.bookingdate }}</td>
+            <td>{{ b.checkindate }}</td>
+            <td>{{ b.checkoutdate }}</td>
+            <td>
+                {% if b.status == 'Pending' %}
+                    <span class="badge bg-warning text-dark">Pending</span>
+                {% elif b.status == 'Checked-in' %}
+                    <span class="badge bg-success">Checked-in</span>
+                {% elif b.status == 'Cancelled' %}
+                    <span class="badge bg-danger">Cancelled</span>
+                {% endif %}
+            </td>
+            <td class="d-flex gap-2">
+                <form method="POST" action="{{ url_for('employee.delete_booking', booking_id=b.bookingid) }}"
+                      onsubmit="return confirm('Are you sure you want to archive and delete this booking?');">
+                    <button type="submit" class="btn btn-sm btn-danger">🗑️ Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="alert alert-info">No bookings found.</div>
+{% endif %}
+{% endblock %}
