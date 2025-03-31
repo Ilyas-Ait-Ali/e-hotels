@@ -54,11 +54,18 @@ DROP FUNCTION IF EXISTS prevent_late_cancellation CASCADE;
 
 CREATE OR REPLACE FUNCTION prevent_late_cancellation() RETURNS TRIGGER AS $$
 BEGIN
+    -- Block cancellation on check-in day
     IF NEW.Status = 'Cancelled'
        AND OLD.Status != 'Cancelled'
        AND NEW.CheckInDate = CURRENT_DATE THEN
-        RAISE EXCEPTION 'Cannot cancel a booking on the day of check-in.';
+        RAISE EXCEPTION '⛔ Cannot cancel a booking on the day of check-in.';
     END IF;
+
+    -- Block cancellation if already checked-in
+    IF OLD.Status = 'Checked-in' AND NEW.Status = 'Cancelled' THEN
+        RAISE EXCEPTION '⛔ Cannot cancel a booking that has already been checked-in.';
+    END IF;
+
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
