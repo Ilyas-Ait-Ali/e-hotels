@@ -379,6 +379,7 @@ def edit_employee(employee_id):
 
     position = session.get('position')
     hotel_id = session.get('hotel_id')
+    current_user_id = session['user_id']
 
     employee = db.session.execute(
         text("SELECT * FROM Employee WHERE EmployeeID = :eid"),
@@ -388,20 +389,15 @@ def edit_employee(employee_id):
     if not employee:
         flash("❌ Employee not found.")
         return redirect(url_for('employee.manage_employees'))
-    
-    if position == 'Admin' and employee.employeeid == session['user_id']:
-        flash("⚠️ You cannot edit your own account.")
-        return redirect(url_for('employee.manage_employees'))
-    elif position == 'Manager' and employee.employeeid == session['user_id']:
-        flash("⚠️ You cannot edit your own account.")
-        return redirect(url_for('employee.manage_employees'))
 
-
-
+    # Permissions
     if position == 'Manager':
-        if employee.hotelid != hotel_id or employee.position in ['Admin', 'Manager']:
-            flash("❌ You do not have permission to edit this employee.")
-            return redirect(url_for('employee.manage_employees'))
+        # Managers can edit themselves
+        if employee.employeeid != current_user_id:
+            # But cannot edit Admins or Managers from other hotels
+            if employee.position in ['Admin', 'Manager'] or employee.hotelid != hotel_id:
+                flash("❌ Managers can only edit employees from their own hotel who are not Admin or Manager.")
+                return redirect(url_for('employee.manage_employees'))
 
     if request.method == 'POST':
         fullname = request.form.get('fullname')
@@ -414,6 +410,7 @@ def edit_employee(employee_id):
             flash("❌ All fields are required.")
             return redirect(url_for('employee.edit_employee', employee_id=employee_id))
 
+        # Restrict what a Manager can change
         if position == 'Manager':
             if emp_position in ['Admin', 'Manager']:
                 flash("❌ You cannot assign Admin or Manager roles.")
@@ -929,3 +926,150 @@ def delete_room_problem(room_id, problem):
         flash(f"❌ Deletion failed: {e}")
 
     return redirect(url_for('employee.manage_room_problems'))
+
+
+@bp_employee.route('/employee/bookings')
+def view_bookings():
+    if 'user_type' not in session or session['user_type'] != 'employee':
+        return redirect(url_for('auth.login'))
+
+    hotel_id = session.get('hotel_id')
+    position = session.get('position')
+
+    if position == 'Admin':
+        query = text("""
+            SELECT b.BookingID, c.FullName AS CustomerName, h.HotelName, b.RoomID,
+                   b.BookingDate, b.CheckInDate, b.CheckOutDate, b.Status
+            FROM Booking b
+            JOIN Customer c ON b.CustomerID = c.CustomerID
+            JOIN Hotel h ON b.HotelID = h.HotelID
+            ORDER BY b.CheckInDate DESC
+        """)
+        params = {}
+    else:
+        query = text("""
+            SELECT b.BookingID, c.FullName AS CustomerName, h.HotelName, b.RoomID,
+                   b.BookingDate, b.CheckInDate, b.CheckOutDate, b.Status
+            FROM Booking b
+            JOIN Customer c ON b.CustomerID = c.CustomerID
+            JOIN Hotel h ON b.HotelID = h.HotelID
+            WHERE b.HotelID = :hid
+            ORDER BY b.CheckInDate DESC
+        """)
+        params = {'hid': hotel_id}
+
+    bookings = db.session.execute(query, params).fetchall()
+    return render_template("employee/view_bookings.html", bookings=bookings)
+
+@bp_employee.route('/employee/bookings/delete/<int:booking_id>', methods=['POST'])
+def delete_booking(booking_id):
+    if 'user_type' not in session or session['user_type'] != 'employee':
+        return redirect(url_for('auth.login'))
+
+    try:
+        db.session.execute(text("DELETE FROM Booking WHERE BookingID = :bid"), {'bid': booking_id})
+        db.session.commit()
+        flash("✅ Booking archived and deleted.")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"❌ Failed to delete booking: {e}")
+
+    return redirect(url_for('employee.view_bookings'))
+
+@bp_employee.route('/employee/rentals')
+def view_rentals():
+    if 'user_type' not in session or session['user_type'] != 'employee':
+        return redirect(url_for('auth.login'))
+
+    hotel_id = session.get('hotel_id')
+    position = session.get('position')
+
+    if position == 'Admin':
+        query = text("""
+            SELECT r.RentalID, c.FullName AS CustomerName, h.HotelName, r.RoomID,
+                   r.CheckInDate, r.CheckOutDate, r.Status, r.PaymentAmount, r.PaymentMethod
+            FROM Rental r
+            JOIN Customer c ON r.CustomerID = c.CustomerID
+            JOIN Hotel h ON r.HotelID = h.HotelID
+            ORDER BY r.CheckInDate DESC
+        """)
+        params = {}
+    else:
+        query = text("""
+            SELECT r.RentalID, c.FullName AS CustomerName, h.HotelName, r.RoomID,
+                   r.CheckInDate, r.CheckOutDate, r.Status, r.PaymentAmount, r.PaymentMethod
+            FROM Rental r
+            JOIN Customer c ON r.CustomerID = c.CustomerID
+            JOIN Hotel h ON r.HotelID = h.HotelID
+            WHERE r.HotelID = :hid
+            ORDER BY r.CheckInDate DESC
+        """)
+        params = {'hid': hotel_id}
+
+    rentals = db.session.execute(query, params).fetchall()
+    return render_template("employee/view_rentals.html", rentals=rentals)
+
+@bp_employee.route('/employee/rentals/delete/<int:rental_id>', methods=['POST'])
+def delete_rental(rental_id):
+    if 'user_type' not in session or session['user_type'] != 'employee':
+        return redirect(url_for('auth.login'))
+
+    try:
+        db.session.execute(text("DELETE FROM Rental WHERE RentalID = :rid"), {'rid': rental_id})
+        db.session.commit()
+        flash("✅ Rental archived and deleted.")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"❌ Failed to delete rental: {e}")
+
+    return redirect(url_for('employee.view_rentals'))
+
+@bp_employee.route('/employee/bookings/archive')
+def view_booking_archive():
+    if 'user_type' not in session or session['user_type'] != 'employee':
+        return redirect(url_for('auth.login'))
+
+    position = session.get('position')
+    hotel_id = session.get('hotel_id')
+
+    if position == 'Admin':
+        query = text("SELECT * FROM BookingArchive ORDER BY ArchiveDate DESC")
+        params = {}
+    else:
+        # Filter by hotel for non-admins
+        query = text("""
+            SELECT * FROM BookingArchive 
+            WHERE HotelName IN (
+                SELECT HotelName FROM Hotel WHERE HotelID = :hid
+            )
+            ORDER BY ArchiveDate DESC
+        """)
+        params = {'hid': hotel_id}
+
+    archived_bookings = db.session.execute(query, params).fetchall()
+    return render_template("employee/booking_archive.html", bookings=archived_bookings)
+
+
+@bp_employee.route('/employee/rentals/archive')
+def view_rental_archive():
+    if 'user_type' not in session or session['user_type'] != 'employee':
+        return redirect(url_for('auth.login'))
+
+    position = session.get('position')
+    hotel_id = session.get('hotel_id')
+
+    if position == 'Admin':
+        query = text("SELECT * FROM RentalArchive ORDER BY ArchiveDate DESC")
+        params = {}
+    else:
+        query = text("""
+            SELECT * FROM RentalArchive 
+            WHERE HotelName IN (
+                SELECT HotelName FROM Hotel WHERE HotelID = :hid
+            )
+            ORDER BY ArchiveDate DESC
+        """)
+        params = {'hid': hotel_id}
+
+    archived_rentals = db.session.execute(query, params).fetchall()
+    return render_template("employee/rental_archive.html", rentals=archived_rentals)
