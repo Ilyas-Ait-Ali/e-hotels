@@ -9,7 +9,6 @@
 {% endif %}
 
 <form method="GET" class="row g-3 mb-4">
-    <!-- Search form (unchanged) -->
     <div class="col-md-3">
         <label class="form-label">Check-in Date</label>
         <input type="date" class="form-control" name="checkin" value="{{ checkin }}" required>
@@ -59,6 +58,22 @@
         <label class="form-label">Max Price ($)</label>
         <input type="number" class="form-control" name="price" min="0" value="{{ request.args.price }}">
     </div>
+    <div class="col-md-3">
+        <label class="form-label">Sort By</label>
+        <select class="form-select" name="sort">
+            <option value="">Default</option>
+            <option value="price" {% if request.args.sort == 'price' %}selected{% endif %}>💰 Price (Low to High)</option>
+            <option value="price_desc" {% if request.args.sort == 'price_desc' %}selected{% endif %}>💰 Price (High to Low)</option>
+            <option value="rating" {% if request.args.sort == 'rating' %}selected{% endif %}>⭐ Rating (High to Low)</option>
+            <option value="rating_asc" {% if request.args.sort == "rating_asc" %}selected{% endif %}>⭐ Rating (Low to High)</option>
+            <option value="capacity" {% if request.args.sort == 'capacity' %}selected{% endif %}>🛏 Capacity (High to Low)</option>
+            <option value="capacity_asc" {% if request.args.sort == "capacity_asc" %}selected{% endif %}>🛏  Capacity (Low to High)</option>
+            <option value="amenities" {% if request.args.sort == 'amenities' %}selected{% endif %}>🧴 Amenities (Most to Least)</option>
+            <option value="amenities_least" {% if request.args.sort == "amenities_least" %}selected{% endif %}>🧴 Amenities (Least to Most)</option>
+            <option value="category" {% if request.args.sort == 'category' %}selected{% endif %}>🏨 Category (A-Z)</option>
+        </select>
+    </div>
+        
     <div class="col-md-12 text-end d-flex justify-content-end gap-2">
         <button type="submit" class="btn btn-primary">Search</button>
         <a href="{{ url_for('customer.search_rooms') }}" class="btn btn-outline-secondary">Reset</a>

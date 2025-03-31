@@ -13,6 +13,8 @@ def search_rooms():
 
     checkin = request.args.get("checkin")
     checkout = request.args.get("checkout")
+    sort_by = request.args.get("sort")
+
     if not checkin or not checkout:
         return render_template("customer/search.html", rooms=[], checkin=None, checkout=None)
 
@@ -55,6 +57,25 @@ def search_rooms():
         filters.append("r.ViewType = :viewtype")
         params["viewtype"] = request.args["viewtype"]
 
+
+    order_clause = "r.Price"
+    if sort_by == "price_desc":
+        order_clause = "r.Price DESC"
+    elif sort_by == "rating":
+        order_clause = "h.Rating DESC"
+    elif sort_by == "rating_asc":
+        order_clause = "h.Rating ASC"
+    elif sort_by == "category":
+        order_clause = "h.Category"
+    elif sort_by == "capacity":
+        order_clause = "array_position(ARRAY['suite','family','triple','double','single'], LOWER(r.Capacity))"
+    elif sort_by == "capacity_asc":
+        order_clause = "array_position(ARRAY['single','double','triple','family','suite'], LOWER(r.Capacity))"
+    elif sort_by == "amenities":
+        order_clause = "(SELECT COUNT(*) FROM RoomAmenities ra WHERE ra.HotelID = r.HotelID AND ra.RoomID = r.RoomID) DESC"
+    elif sort_by == "amenities_least":
+        order_clause = "(SELECT COUNT(*) FROM RoomAmenities ra WHERE ra.HotelID = r.HotelID AND ra.RoomID = r.RoomID) ASC"        
+
     query = f"""
         SELECT r.*, h.HotelName, h.Address, hc.ChainName, h.Rating,
             EXISTS (
@@ -81,10 +102,14 @@ def search_rooms():
                 WHERE rt.RoomID = r.RoomID AND rt.HotelID = r.HotelID
                 AND (rt.CheckInDate, rt.CheckOutDate) OVERLAPS (:checkin, :checkout)
             )
-        ORDER BY r.Price
+        ORDER BY {order_clause}
     """
     results = db.session.execute(text(query), params).fetchall()
     return render_template("customer/search.html", rooms=results, checkin=checkin, checkout=checkout)
+
+
+
+
 
 @bp_customer.route('/customer/bookings')
 def my_bookings():
