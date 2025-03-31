@@ -9,12 +9,12 @@
         <label class="form-label">Customer Full Name</label>
         <input type="text" name="customer_name" class="form-control" required>
     </div>
-
+    {% if is_admin %}
     <div class="mb-3">
         <label class="form-label">Hotel ID</label>
         <input type="number" name="hotel_id" class="form-control" required>
     </div>
-
+    {% endif %}
     <div class="mb-3">
         <label class="form-label">Room ID</label>
         <input type="number" name="room_id" class="form-control" required>
