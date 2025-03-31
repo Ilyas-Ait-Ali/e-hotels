@@ -16,7 +16,7 @@
 
     <div class="mb-3">
         <label class="form-label">Room ID</label>
-        <input type="number" name="room_id" class="form-control" min="1" value="{{ problem_data.roomid if problem_data else '' }}" {% if mode == 'edit' %}readonly{% endif %} required>
+        <input type="number" name="room_id" class="form-control" min="101" value="{{ problem_data.roomid if problem_data else '' }}" {% if mode == 'edit' %}readonly{% endif %} required>
     </div>
 
     <div class="mb-3">
