@@ -19,7 +19,7 @@ def employee_dashboard():
         FROM Booking b
         JOIN Hotel h ON b.HotelID = h.HotelID
         JOIN Customer c ON b.CustomerID = c.CustomerID
-        WHERE b.Status IN ('Pending', 'Confirmed')
+        WHERE b.Status IN ('Pending', 'Checked-in')
           AND b.CheckInDate >= CURRENT_DATE
           AND NOT EXISTS (
               SELECT 1 FROM Rental r WHERE r.BookingID = b.BookingID
@@ -69,7 +69,7 @@ def convert_booking():
             return redirect(url_for('employee.employee_dashboard'))
 
         db.session.execute(text("""
-            UPDATE Booking SET Status = 'Confirmed' WHERE BookingID = :bid
+            UPDATE Booking SET Status = 'Checked-in' WHERE BookingID = :bid
         """), {'bid': booking_id})
 
         db.session.execute(text("""
