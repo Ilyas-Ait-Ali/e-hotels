@@ -16,13 +16,18 @@ def login():
         full_name = full_name_input.lower()
         user_type = request.form['user_type']
         selected_position = request.form.get('position')
+        password = request.form.get('password', '').strip()
 
-        if not full_name or user_type not in ['customer', 'employee']:
+        if not full_name or not password or user_type not in ['customer', 'employee']:
             return render_template('login.html', error="Invalid input")
 
         if user_type == 'customer':
+            if password != 'customer':
+                return render_template('login.html', error="Incorrect password for customer.")
+
             query = text("SELECT CustomerID, FullName FROM Customer WHERE LOWER(FullName) = :name")
             result = db.session.execute(query, {'name': full_name}).fetchone()
+
             if not result:
                 return render_template('login.html', error="Customer not found")
 
@@ -31,7 +36,19 @@ def login():
             session['user_name'] = result[1]
             return redirect(url_for('customer.my_bookings'))
 
-        else:  # employee login
+        else:  
+            if not selected_position:
+                return render_template('login.html', error="Please select a position.")
+
+            expected_pw = {
+                'Admin': 'admin',
+                'Manager': 'employee',
+                'Receptionist': 'employee'
+            }.get(selected_position)
+
+            if password != expected_pw:
+                return render_template('login.html', error=f"Incorrect password for {selected_position}.")
+
             query = text("SELECT EmployeeID, Position, HotelID, FullName FROM Employee WHERE LOWER(FullName) = :name")
             result = db.session.execute(query, {'name': full_name}).fetchone()
 
@@ -39,12 +56,12 @@ def login():
                 return render_template('login.html', error="Employee not found")
 
             db_position = result[1]
-            if not selected_position or selected_position != db_position:
+            if selected_position != db_position:
                 return render_template('login.html', error="Position does not match our records.")
 
             session['user_id'] = result[0]
             session['position'] = db_position
-            session['user_type'] = user_type
+            session['user_type'] = 'employee'
             session['user_name'] = result[3]
 
             if db_position == 'Manager':
@@ -53,6 +70,7 @@ def login():
             return redirect(url_for('employee.employee_dashboard'))
 
     return render_template('login.html')
+
 
 @bp_auth.route('/register', methods=['GET', 'POST'])
 def register():
