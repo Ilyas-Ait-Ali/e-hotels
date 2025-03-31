@@ -114,6 +114,7 @@ def rent_room():
 
     if request.method == 'POST':
         customer_name = request.form.get("customer_name").strip()
+        customer_id = request.form.get("customer_id")
         room_id = request.form.get("room_id")
         checkin = request.form.get("checkin")
         checkout = request.form.get("checkout")
@@ -128,17 +129,15 @@ def rent_room():
             flash("❌ Hotel ID is required for Admin.")
             return redirect(url_for('employee.rent_room'))
 
-        # Get CustomerID
+        # Validate CustomerID + Name
         customer = db.session.execute(
-            text("SELECT CustomerID FROM Customer WHERE FullName = :name"),
-            {"name": customer_name}
+            text("SELECT * FROM Customer WHERE CustomerID = :cid AND LOWER(FullName) = :name"),
+            {"cid": customer_id, "name": customer_name.lower()}
         ).fetchone()
 
         if not customer:
-            flash("❌ Customer not found.")
+            flash("❌ Customer ID and Name do not match any existing customer.")
             return redirect(url_for('employee.rent_room'))
-
-        customer_id = customer[0]
 
         try:
             db.session.execute(text("""
@@ -186,6 +185,7 @@ def rent_room():
             return redirect(url_for('employee.rent_room'))
 
     return render_template("employee/rent_form.html", is_admin=(position == "Admin"))
+
 
 
 
