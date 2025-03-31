@@ -793,3 +793,167 @@ def delete_room(room_id):
         flash(f"❌ Failed to delete room: {e}")
 
     return redirect(url_for('employee.manage_rooms'))
+
+
+@bp_employee.route('/employee/problems')
+def manage_room_problems():
+    if 'user_type' not in session or session['user_type'] != 'employee':
+        return redirect(url_for('auth.login'))
+
+    position = session.get('position')
+    user_id = session.get('user_id')
+    hotel_id = session.get('hotel_id') 
+
+    if position == 'Admin':
+        query = text("""
+            SELECT rp.*, h.HotelName
+            FROM RoomProblems rp
+            JOIN Hotel h ON rp.HotelID = h.HotelID
+            ORDER BY rp.ReportDate DESC
+        """)
+        problems = db.session.execute(query).fetchall()
+
+    elif position == 'Manager':
+        if not hotel_id:
+            flash("⚠️ Hotel information missing for manager.")
+            return redirect(url_for('employee.employee_dashboard'))
+
+        query = text("""
+            SELECT rp.*, h.HotelName
+            FROM RoomProblems rp
+            JOIN Hotel h ON rp.HotelID = h.HotelID
+            WHERE rp.HotelID = :hid
+            ORDER BY rp.ReportDate DESC
+        """)
+        problems = db.session.execute(query, {'hid': hotel_id}).fetchall()
+    else:
+        flash("Access denied.")
+        return redirect(url_for('employee.employee_dashboard'))
+
+    return render_template('employee/room_problems.html', problems=problems)
+
+
+@bp_employee.route('/employee/problems/add', methods=['GET', 'POST'])
+def add_room_problem():
+    if 'user_type' not in session or session['user_type'] != 'employee':
+        return redirect(url_for('auth.login'))
+
+    position = session.get('position')
+    hotel_id = session.get('hotel_id') if position == 'Manager' else None
+
+    if request.method == 'POST':
+        hotel_id_form = request.form.get('hotel_id')
+        room_id = request.form.get('room_id')
+        problem = request.form.get('problem')
+        report_date = request.form.get('report_date')
+
+        if position == 'Manager' and str(hotel_id) != hotel_id_form:
+            flash("⚠️ Managers can only report problems for their own hotel.")
+            return redirect(url_for('employee.manage_room_problems'))
+
+        try:
+            db.session.execute(text("""
+                INSERT INTO RoomProblems (HotelID, RoomID, Problem, ReportDate, Resolved)
+                VALUES (:hid, :rid, :prob, :rdate, FALSE)
+            """), {
+                'hid': hotel_id_form,
+                'rid': room_id,
+                'prob': problem,
+                'rdate': report_date
+            })
+            db.session.commit()
+            flash("✅ Room problem reported successfully.")
+            return redirect(url_for('employee.manage_room_problems'))
+
+        except Exception as e:
+            db.session.rollback()
+            flash(f"❌ Failed to add room problem: {e}")
+
+    return render_template("employee/room_problem_form.html", mode='add', hotel_id=hotel_id)
+
+
+@bp_employee.route('/employee/problems/edit/<int:room_id>/<path:problem>', methods=['GET', 'POST'])
+def edit_room_problem(room_id, problem):
+    if 'user_type' not in session or session['user_type'] != 'employee':
+        return redirect(url_for('auth.login'))
+
+    position = session.get('position')
+    hotel_id = session.get('hotel_id') if position == 'Manager' else None
+
+    room_problem = db.session.execute(text("""
+        SELECT * FROM RoomProblems WHERE RoomID = :rid AND Problem = :prob
+    """), {'rid': room_id, 'prob': problem}).fetchone()
+
+    if not room_problem:
+        flash("❌ Problem not found.")
+        return redirect(url_for('employee.manage_room_problems'))
+
+    if position == 'Manager' and room_problem.hotelid != hotel_id:
+        flash("⚠️ Managers can only edit problems in their own hotel.")
+        return redirect(url_for('employee.manage_room_problems'))
+
+    if request.method == 'POST':
+        new_problem = request.form.get('problem')
+        report_date = request.form.get('report_date')
+        resolved = request.form.get('resolved') == 'true'
+
+        try:
+            db.session.execute(text("""
+                UPDATE RoomProblems
+                SET Problem = :new_prob, ReportDate = :rdate, Resolved = :resolved
+                WHERE HotelID = :hid AND RoomID = :rid AND Problem = :old_prob
+            """), {
+                'new_prob': new_problem,
+                'rdate': report_date,
+                'resolved': resolved,
+                'hid': room_problem.hotelid,
+                'rid': room_id,
+                'old_prob': problem
+            })
+            db.session.commit()
+            flash("✅ Room problem updated.")
+            return redirect(url_for('employee.manage_room_problems'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f"❌ Update failed: {e}")
+
+    return render_template("employee/room_problem_form.html", mode='edit', problem_data=room_problem)
+
+
+@bp_employee.route('/employee/problems/delete/<int:room_id>/<path:problem>', methods=['POST'])
+def delete_room_problem(room_id, problem):
+    if 'user_type' not in session or session['user_type'] != 'employee':
+        return redirect(url_for('auth.login'))
+
+    position = session.get('position')
+    hotel_id = session.get('hotel_id') if position == 'Manager' else None
+
+    # Fetch the record to validate hotel access
+    problem_row = db.session.execute(text("""
+        SELECT * FROM RoomProblems WHERE RoomID = :rid AND Problem = :prob
+    """), {'rid': room_id, 'prob': problem}).fetchone()
+
+    if not problem_row:
+        flash("❌ Room problem not found.")
+        return redirect(url_for('employee.manage_room_problems'))
+
+    if position == 'Manager' and problem_row.hotelid != hotel_id:
+        flash("⚠️ Managers can only delete problems in their own hotel.")
+        return redirect(url_for('employee.manage_room_problems'))
+
+    try:
+        db.session.execute(text("""
+            DELETE FROM RoomProblems
+            WHERE HotelID = :hid AND RoomID = :rid AND Problem = :prob
+        """), {
+            'hid': problem_row.hotelid,
+            'rid': room_id,
+            'prob': problem
+        })
+        db.session.commit()
+        flash("✅ Room problem deleted.")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"❌ Deletion failed: {e}")
+
+    return redirect(url_for('employee.manage_room_problems'))
