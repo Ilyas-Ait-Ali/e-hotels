@@ -57,7 +57,7 @@ def search_rooms():
         filters.append("r.ViewType = :viewtype")
         params["viewtype"] = request.args["viewtype"]
 
-
+    # Sorting logic
     order_clause = "r.Price"
     if sort_by == "price_desc":
         order_clause = "r.Price DESC"
@@ -68,25 +68,34 @@ def search_rooms():
     elif sort_by == "category":
         order_clause = "h.Category"
     elif sort_by == "capacity":
-        order_clause = "array_position(ARRAY['suite','family','triple','double','single'], LOWER(r.Capacity))"
+        order_clause = "CASE r.Capacity WHEN 'suite' THEN 5 WHEN 'family' THEN 4 WHEN 'triple' THEN 3 WHEN 'double' THEN 2 WHEN 'single' THEN 1 ELSE 6 END DESC"
     elif sort_by == "capacity_asc":
-        order_clause = "array_position(ARRAY['single','double','triple','family','suite'], LOWER(r.Capacity))"
+        order_clause = "CASE r.Capacity WHEN 'single' THEN 1 WHEN 'double' THEN 2 WHEN 'triple' THEN 3 WHEN 'family' THEN 4 WHEN 'suite' THEN 5 ELSE 6 END ASC"
     elif sort_by == "amenities":
-        order_clause = "(SELECT COUNT(*) FROM RoomAmenities ra WHERE ra.HotelID = r.HotelID AND ra.RoomID = r.RoomID) DESC"
+        order_clause = """(
+            SELECT COUNT(*) FROM RoomAmenities ra
+            WHERE ra.HotelID = r.HotelID AND ra.RoomID = r.RoomID
+        ) DESC"""
     elif sort_by == "amenities_least":
-        order_clause = "(SELECT COUNT(*) FROM RoomAmenities ra WHERE ra.HotelID = r.HotelID AND ra.RoomID = r.RoomID) ASC"        
+        order_clause = """(
+            SELECT COUNT(*) FROM RoomAmenities ra
+            WHERE ra.HotelID = r.HotelID AND ra.RoomID = r.RoomID
+        ) ASC"""
 
     query = f"""
         SELECT r.*, h.HotelName, h.Address, hc.ChainName, h.Rating,
-            EXISTS (
-                SELECT 1 FROM RoomProblems p
-                WHERE p.HotelID = r.HotelID AND p.RoomID = r.RoomID AND p.Resolved = FALSE
-            ) AS has_problem,
             (
                 SELECT string_agg(ra.Amenity, ', ')
                 FROM RoomAmenities ra
                 WHERE ra.HotelID = r.HotelID AND ra.RoomID = r.RoomID
-            ) AS amenities
+            ) AS amenities,
+            (
+                SELECT p.Problem
+                FROM RoomProblems p
+                WHERE p.HotelID = r.HotelID AND p.RoomID = r.RoomID AND p.Resolved = FALSE
+                ORDER BY p.ReportDate DESC
+                LIMIT 1
+            ) AS problem_cause
         FROM Room r
         JOIN Hotel h ON r.HotelID = h.HotelID
         JOIN HotelChain hc ON h.HotelChainID = hc.HotelChainID
@@ -106,6 +115,7 @@ def search_rooms():
     """
     results = db.session.execute(text(query), params).fetchall()
     return render_template("customer/search.html", rooms=results, checkin=checkin, checkout=checkout)
+
 
 
 

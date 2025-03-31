@@ -9,6 +9,7 @@
 {% endif %}
 
 <form method="GET" class="row g-3 mb-4">
+
     <div class="col-md-3">
         <label class="form-label">Check-in Date</label>
         <input type="date" class="form-control" name="checkin" value="{{ checkin }}" required>
@@ -66,14 +67,13 @@
             <option value="price_desc" {% if request.args.sort == 'price_desc' %}selected{% endif %}>💰 Price (High to Low)</option>
             <option value="rating" {% if request.args.sort == 'rating' %}selected{% endif %}>⭐ Rating (High to Low)</option>
             <option value="rating_asc" {% if request.args.sort == "rating_asc" %}selected{% endif %}>⭐ Rating (Low to High)</option>
+            <option value="capacity_asc" {% if request.args.sort == "capacity_asc" %}selected{% endif %}>🛏 Capacity (Low to High)</option>
             <option value="capacity" {% if request.args.sort == 'capacity' %}selected{% endif %}>🛏 Capacity (High to Low)</option>
-            <option value="capacity_asc" {% if request.args.sort == "capacity_asc" %}selected{% endif %}>🛏  Capacity (Low to High)</option>
             <option value="amenities" {% if request.args.sort == 'amenities' %}selected{% endif %}>🧴 Amenities (Most to Least)</option>
             <option value="amenities_least" {% if request.args.sort == "amenities_least" %}selected{% endif %}>🧴 Amenities (Least to Most)</option>
             <option value="category" {% if request.args.sort == 'category' %}selected{% endif %}>🏨 Category (A-Z)</option>
         </select>
     </div>
-        
     <div class="col-md-12 text-end d-flex justify-content-end gap-2">
         <button type="submit" class="btn btn-primary">Search</button>
         <a href="{{ url_for('customer.search_rooms') }}" class="btn btn-outline-secondary">Reset</a>
@@ -81,7 +81,8 @@
 </form>
 
 {% if rooms %}
-<h4>Results:</h4>
+
+
 <table class="table table-striped table-bordered">
     <thead class="table-light">
         <tr>
@@ -110,8 +111,8 @@
             <td>{{ room.rating }}</td>
             <td>{{ room.amenities if room.amenities else 'N/A' }}</td>
             <td>
-                {% if room.has_problem %}
-                    <span class="badge bg-danger mb-1">⚠ Problem Reported</span><br>
+                {% if room.problem_cause %}
+                    <span class="badge bg-danger mb-1">⚠ Problem: {{ room.problem_cause }}</span><br>
                     <button class="btn btn-secondary btn-sm" disabled>Unavailable</button>
                 {% else %}
                     <form method="POST" action="{{ url_for('customer.book_room') }}">
@@ -131,4 +132,3 @@
 <div class="alert alert-warning">No rooms match your criteria.</div>
 {% endif %}
 {% endblock %}
-
