@@ -316,3 +316,95 @@ AFTER UPDATE OF Resolved ON RoomProblems
 FOR EACH ROW
 WHEN (NEW.Resolved = TRUE)
 EXECUTE FUNCTION restore_status_if_all_resolved();
+
+-- Trigger function to mark a room as 'Out-of-Order' when a new problem is reported while it's currently 'Available'
+DROP TRIGGER IF EXISTS trg_mark_room_out_of_order ON RoomProblems;
+DROP FUNCTION IF EXISTS mark_room_out_of_order CASCADE;
+
+CREATE OR REPLACE FUNCTION mark_room_out_of_order() RETURNS TRIGGER AS $$
+DECLARE
+    current_status TEXT;
+BEGIN
+    SELECT Status INTO current_status
+    FROM Room
+    WHERE HotelID = NEW.HotelID AND RoomID = NEW.RoomID;
+
+    IF current_status = 'Available' THEN
+        UPDATE Room
+        SET Status = 'Out-of-Order'
+        WHERE HotelID = NEW.HotelID AND RoomID = NEW.RoomID;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_mark_room_out_of_order
+AFTER INSERT ON RoomProblems
+FOR EACH ROW
+EXECUTE FUNCTION mark_room_out_of_order();
+
+-- Trigger function to prevent inserting a booking that overlaps with an existing booking or rental
+DROP TRIGGER IF EXISTS trg_prevent_overlapping_booking ON Booking;
+DROP FUNCTION IF EXISTS prevent_overlapping_booking CASCADE;
+
+CREATE OR REPLACE FUNCTION prevent_overlapping_booking() RETURNS TRIGGER AS $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM Booking
+        WHERE HotelID = NEW.HotelID AND RoomID = NEW.RoomID
+          AND Status IN ('Pending', 'Checked-in')
+          AND (
+              NEW.CheckInDate < CheckOutDate AND NEW.CheckOutDate > CheckInDate
+          )
+    ) OR EXISTS (
+        SELECT 1 FROM Rental
+        WHERE HotelID = NEW.HotelID AND RoomID = NEW.RoomID
+          AND (
+              NEW.CheckInDate < CheckOutDate AND NEW.CheckOutDate > CheckInDate
+          )
+    ) THEN
+        RAISE EXCEPTION '⛔ Cannot book: Room already booked or rented for selected dates.';
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_prevent_overlapping_booking
+BEFORE INSERT ON Booking
+FOR EACH ROW
+EXECUTE FUNCTION prevent_overlapping_booking();
+
+-- Trigger function to prevent inserting a rental that overlaps with an existing booking or ongoing rental
+DROP TRIGGER IF EXISTS trg_prevent_overlapping_rental ON Rental;
+DROP FUNCTION IF EXISTS prevent_overlapping_rental CASCADE;
+
+CREATE OR REPLACE FUNCTION prevent_overlapping_rental() RETURNS TRIGGER AS $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM Booking
+        WHERE HotelID = NEW.HotelID AND RoomID = NEW.RoomID
+          AND Status IN ('Pending', 'Checked-in')
+          AND (
+              NEW.CheckInDate < CheckOutDate AND NEW.CheckOutDate > CheckInDate
+          )
+    ) OR EXISTS (
+        SELECT 1 FROM Rental
+        WHERE HotelID = NEW.HotelID AND RoomID = NEW.RoomID
+          AND Status = 'Ongoing'
+          AND (
+              NEW.CheckInDate < CheckOutDate AND NEW.CheckOutDate > CheckInDate
+          )
+    ) THEN
+        RAISE EXCEPTION '⛔ Cannot rent: Room already booked or rented for selected dates.';
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_prevent_overlapping_rental
+BEFORE INSERT ON Rental
+FOR EACH ROW
+EXECUTE FUNCTION prevent_overlapping_rental();
