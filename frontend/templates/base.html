@@ -26,7 +26,10 @@
                 </li>
                 <li class="nav-item">
                     <a class="nav-link {% if request.path.startswith('/customer/rentings') %}active{% endif %}" href="{{ url_for('customer.my_rentings') }}">My Rentings</a>
-                </li>                
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.path == '/customer/hotels' %}active{% endif %}" href="{{ url_for('customer.view_all_hotels') }}">View Hotels</a>
+                </li>                                
                 <li class="nav-item">
                     <a class="nav-link {% if request.path == '/view/available-rooms' %}active{% endif %}" href="{{ url_for('view.available_rooms_per_area') }}">Rooms per City</a>
                 </li>

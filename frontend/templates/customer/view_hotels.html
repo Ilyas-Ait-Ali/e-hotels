@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}All Hotels{% endblock %}
+
+{% block content %}
+<h2>🏨 All Hotels</h2>
+
+{% if hotels %}
+<table class="table table-bordered table-hover">
+    <thead class="table-light">
+        <tr>
+            <th>Hotel</th>
+            <th>Chain</th>
+            <th>Category</th>
+            <th>Rating</th>
+            <th>Address</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for h in hotels %}
+        <tr>
+            <td>{{ h.hotelname }}</td>
+            <td>{{ h.chainname }}</td>
+            <td>{{ h.category }}</td>
+            <td>{{ h.rating }} ⭐</td>
+            <td>{{ h.address }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="alert alert-info">No hotels found.</div>
+{% endif %}
+{% endblock %}

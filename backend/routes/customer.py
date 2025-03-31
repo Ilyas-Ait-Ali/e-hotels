@@ -237,3 +237,19 @@ def my_rentings():
     """), {'cid': customer_id}).fetchall()
 
     return render_template("customer/my_rentings.html", rentings=rentings)
+
+
+@bp_customer.route('/customer/hotels')
+def view_all_hotels():
+    if 'user_type' not in session or session['user_type'] != 'customer':
+        return redirect(url_for('auth.login'))
+
+    query = text("""
+        SELECT h.HotelID, h.HotelName, h.Address, h.Category, h.Rating, hc.ChainName
+        FROM Hotel h
+        JOIN HotelChain hc ON h.HotelChainID = hc.HotelChainID
+        ORDER BY h.Rating DESC, h.HotelName
+    """)
+    hotels = db.session.execute(query).fetchall()
+
+    return render_template('customer/view_hotels.html', hotels=hotels)
