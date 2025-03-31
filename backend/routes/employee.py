@@ -984,6 +984,20 @@ def view_rentals():
     hotel_id = session.get('hotel_id')
     position = session.get('position')
 
+    db.session.execute(text("""
+        UPDATE Rental
+        SET Status = 'Completed'
+        WHERE Status != 'Completed'
+          AND CURRENT_DATE > CheckOutDate;
+    """))
+    db.session.execute(text("""
+        UPDATE Rental
+        SET Status = 'Ongoing'
+        WHERE Status NOT IN ('Completed')
+          AND CURRENT_DATE BETWEEN CheckInDate AND CheckOutDate;
+    """))
+    db.session.commit()
+
     if position == 'Admin':
         query = text("""
             SELECT r.RentalID, c.FullName AS CustomerName, h.HotelName, r.RoomID,
