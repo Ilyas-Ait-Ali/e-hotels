@@ -179,7 +179,11 @@ def cancel_booking():
         flash("✅ Booking successfully cancelled.")
     except Exception as e:
         db.session.rollback()
-        flash(f"❌ Failed to cancel booking: {e}")
+        error_msg = str(e).lower()
+        if 'cannot cancel' in error_msg:
+            flash("❌ You cannot cancel a booking on the day of check-in.")
+        else:
+            flash(f"❌ Failed to cancel booking: {e}")
 
     return redirect(url_for('customer.my_bookings'))
 
