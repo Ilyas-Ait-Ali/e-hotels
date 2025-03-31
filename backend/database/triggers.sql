@@ -221,6 +221,9 @@ FOR EACH ROW
 EXECUTE FUNCTION update_room_status_rental();
 
 -- Trigger function to mark booking as Checked-in when rental is created
+DROP TRIGGER IF EXISTS trg_mark_booking_checked_in ON Rental;
+DROP FUNCTION IF EXISTS mark_booking_checked_in CASCADE;
+
 CREATE OR REPLACE FUNCTION mark_booking_checked_in() RETURNS TRIGGER AS $$
 BEGIN
     IF NEW.BookingID IS NOT NULL THEN
@@ -236,4 +239,32 @@ CREATE TRIGGER trg_mark_booking_checked_in
 AFTER INSERT ON Rental
 FOR EACH ROW
 EXECUTE FUNCTION mark_booking_checked_in();
+
+-- Trigger function to prevent deletion of rooms that are booked or rented
+DROP TRIGGER IF EXISTS trg_prevent_room_deletion ON Room;
+DROP FUNCTION IF EXISTS prevent_deleting_active_rooms CASCADE;
+
+CREATE OR REPLACE FUNCTION prevent_deleting_active_rooms() RETURNS TRIGGER AS $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM Booking
+        WHERE HotelID = OLD.HotelID AND RoomID = OLD.RoomID
+          AND Status IN ('Pending', 'Checked-in')
+    ) OR EXISTS (
+        SELECT 1 FROM Rental
+        WHERE HotelID = OLD.HotelID AND RoomID = OLD.RoomID
+          AND Status = 'Ongoing'
+    ) THEN
+        RAISE EXCEPTION 'Cannot delete room: currently booked or rented.';
+    END IF;
+    RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create trigger
+CREATE TRIGGER trg_prevent_room_deletion
+BEFORE DELETE ON Room
+FOR EACH ROW
+EXECUTE FUNCTION prevent_deleting_active_rooms();
+
 
