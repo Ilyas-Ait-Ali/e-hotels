@@ -296,9 +296,14 @@ DROP TRIGGER IF EXISTS trg_restore_available_status ON RoomProblems;
 DROP FUNCTION IF EXISTS restore_status_if_all_resolved CASCADE;
 
 CREATE OR REPLACE FUNCTION restore_status_if_all_resolved() RETURNS TRIGGER AS $$
+DECLARE
+    current_status TEXT;
 BEGIN
-    -- If all problems for this room are resolved, mark room as Available
-    IF NOT EXISTS (
+    SELECT Status INTO current_status
+    FROM Room
+    WHERE HotelID = NEW.HotelID AND RoomID = NEW.RoomID;
+
+    IF current_status = 'Out-of-Order' AND NOT EXISTS (
         SELECT 1 FROM RoomProblems
         WHERE HotelID = NEW.HotelID AND RoomID = NEW.RoomID AND Resolved = FALSE
     ) THEN
@@ -344,18 +349,25 @@ AFTER INSERT ON RoomProblems
 FOR EACH ROW
 EXECUTE FUNCTION mark_room_out_of_order();
 
--- Trigger: Restore room status when last unresolved problem is deleted
-DROP TRIGGER IF EXISTS trg_restore_status_on_delete ON RoomProblems;
-DROP FUNCTION IF EXISTS restore_status_after_problem_delete CASCADE;
-
+-- Trigger: Restore room status to 'Available' on delete only if status was Out-of-Order
 CREATE OR REPLACE FUNCTION restore_status_after_problem_delete() RETURNS TRIGGER AS $$
+DECLARE
+    current_status TEXT;
+    has_unresolved BOOLEAN;
 BEGIN
-    -- If there are no unresolved problems left after deletion
-    IF NOT EXISTS (
+    -- Check if there are unresolved problems for the same room
+    SELECT EXISTS (
         SELECT 1 FROM RoomProblems
         WHERE HotelID = OLD.HotelID AND RoomID = OLD.RoomID AND Resolved = FALSE
-    ) THEN
-        -- Restore the room to Available
+    ) INTO has_unresolved;
+
+    -- Get the current room status
+    SELECT Status INTO current_status
+    FROM Room
+    WHERE HotelID = OLD.HotelID AND RoomID = OLD.RoomID;
+
+    -- Only update the status to 'Available' if it was 'Out-of-Order' AND there are no more unresolved problems
+    IF current_status = 'Out-of-Order' AND NOT has_unresolved THEN
         UPDATE Room
         SET Status = 'Available'
         WHERE HotelID = OLD.HotelID AND RoomID = OLD.RoomID;
@@ -364,6 +376,8 @@ BEGIN
     RETURN OLD;
 END;
 $$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_restore_status_on_delete ON RoomProblems;
 
 CREATE TRIGGER trg_restore_status_on_delete
 AFTER DELETE ON RoomProblems
