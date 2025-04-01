@@ -53,11 +53,15 @@ def search_rooms():
         filters.append("h.Num_Rooms >= :minrooms")
         params["minrooms"] = request.args["minrooms"]
 
+    if request.args.get("minhotelrooms"):
+        filters.append("h.Num_Rooms >= :minhotelrooms")
+        params["minhotelrooms"] = request.args["minhotelrooms"]
+
     if request.args.get("viewtype"):
         filters.append("r.ViewType = :viewtype")
         params["viewtype"] = request.args["viewtype"]
 
-    # Sorting logic
+    
     order_clause = "r.Price"
     if sort_by == "price_desc":
         order_clause = "r.Price DESC"
@@ -83,7 +87,7 @@ def search_rooms():
         ) ASC"""
 
     query = f"""
-        SELECT r.*, h.HotelName, h.Address, hc.ChainName, h.Rating,
+        SELECT r.*, h.HotelName, h.Address, hc.ChainName, h.Rating, h.Num_Rooms,
             (
                 SELECT string_agg(ra.Amenity, ', ')
                 FROM RoomAmenities ra
