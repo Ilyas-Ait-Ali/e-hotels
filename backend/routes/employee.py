@@ -88,9 +88,9 @@ def convert_booking():
         db.session.commit()
         flash("✅ Booking converted to rental.")
 
-    except Exception as e:
+    except Exception:
         db.session.rollback()
-        flash(f"❌ Failed to convert booking: {e}")
+        raise
 
     return redirect(url_for('employee.employee_dashboard'))
 
@@ -170,10 +170,9 @@ def rent_room():
                 current_date=date.today()
             )
 
-        except Exception as e:
+        except Exception:
             db.session.rollback()
-            flash(f"❌ Rental failed: {e}")
-            return redirect(url_for('employee.rent_room'))
+            raise
 
     return render_template("employee/rent_form.html", is_admin=(position == "Admin"))
 
@@ -216,9 +215,9 @@ def add_customer():
             db.session.commit()
             flash("✅ Customer added successfully.")
             return redirect(url_for('employee.manage_customers'))
-        except Exception as e:
+        except Exception:
             db.session.rollback()
-            flash(f"❌ Failed to add customer: {e}")
+            raise
 
     return render_template("employee/customer_form.html", customer=None)
 
@@ -260,9 +259,9 @@ def edit_customer(customer_id):
             db.session.commit()
             flash("✅ Customer updated successfully.")
             return redirect(url_for('employee.manage_customers'))
-        except Exception as e:
+        except Exception:
             db.session.rollback()
-            flash(f"❌ Failed to update customer: {e}")
+            raise
 
     return render_template("employee/customer_form.html", customer=customer)
 
@@ -276,9 +275,9 @@ def delete_customer(customer_id):
         db.session.execute(text("DELETE FROM Customer WHERE CustomerID = :cid"), {'cid': customer_id})
         db.session.commit()
         flash("🗑️ Customer deleted successfully.")
-    except Exception as e:
+    except Exception:
         db.session.rollback()
-        flash(f"❌ Failed to delete customer: {e}")
+        raise
 
     return redirect(url_for('employee.manage_customers'))
 
@@ -355,9 +354,9 @@ def add_employee():
             flash("✅ Employee added successfully.")
             return redirect(url_for('employee.manage_employees'))
 
-        except Exception as e:
+        except Exception:
             db.session.rollback()
-            flash(f"❌ Failed to add employee: {e}")
+            raise
 
     return render_template("employee/employee_form.html", mode="add", employee=None)
 
@@ -429,9 +428,9 @@ def edit_employee(employee_id):
             flash("✅ Employee updated successfully.")
             return redirect(url_for('employee.manage_employees'))
 
-        except Exception as e:
+        except Exception:
             db.session.rollback()
-            flash(f"❌ Failed to update employee: {e}")
+            raise
 
     return render_template("employee/employee_form.html", mode='edit', employee=employee)
 
@@ -470,9 +469,9 @@ def delete_employee(employee_id):
         db.session.execute(text("DELETE FROM Employee WHERE EmployeeID = :eid"), {'eid': employee_id})
         db.session.commit()
         flash("✅ Employee deleted successfully.")
-    except Exception as e:
+    except Exception:
         db.session.rollback()
-        flash(f"❌ Failed to delete employee: {e}")
+        raise
 
     return redirect(url_for('employee.manage_employees'))
 
@@ -539,9 +538,9 @@ def add_hotel():
             flash("✅ Hotel added successfully.")
             return redirect(url_for('employee.manage_hotels'))
 
-        except Exception as e:
+        except Exception:
             db.session.rollback()
-            flash(f"❌ Failed to add hotel: {e}")
+            raise
 
     return render_template("employee/hotel_form.html", mode="add", hotel_chains=hotel_chains)
 
@@ -610,9 +609,9 @@ def edit_hotel(hotel_id):
             flash("✅ Hotel updated successfully.")
             return redirect(url_for('employee.manage_hotels'))
 
-        except Exception as e:
+        except Exception:
             db.session.rollback()
-            flash(f"❌ Failed to update hotel: {e}")
+            raise
 
     return render_template("employee/hotel_form.html", mode='edit', hotel=hotel, hotel_chains=hotel_chains)
 
@@ -634,9 +633,9 @@ def delete_hotel(hotel_id):
         db.session.execute(text("DELETE FROM Hotel WHERE HotelID = :hid"), {'hid': hotel_id})
         db.session.commit()
         flash("✅ Hotel deleted successfully.")
-    except Exception as e:
+    except Exception:
         db.session.rollback()
-        flash(f"❌ Failed to delete hotel: {e}")
+        raise
 
     return redirect(url_for('employee.manage_hotels'))
 
@@ -717,9 +716,9 @@ def add_room():
             flash("✅ Room added successfully.")
             return redirect(url_for('employee.manage_rooms'))
 
-        except Exception as e:
+        except Exception:
             db.session.rollback()
-            flash(f"❌ Failed to add room: {e}")
+            raise
 
     return render_template("employee/room_form.html", mode='add')
 
@@ -794,9 +793,9 @@ def edit_room(room_id):
             flash("✅ Room updated successfully.")
             return redirect(url_for('employee.manage_rooms'))
 
-        except Exception as e:
+        except Exception:
             db.session.rollback()
-            flash(f"❌ Failed to update room: {e}")
+            raise
 
     return render_template("employee/room_form.html", mode='edit', room=room)
 
@@ -813,9 +812,9 @@ def delete_room(room_id):
         db.session.execute(text("DELETE FROM Room WHERE RoomID = :rid"), {'rid': room_id})
         db.session.commit()
         flash("✅ Room deleted successfully.")
-    except Exception as e:
+    except Exception:
         db.session.rollback()
-        flash(f"❌ Failed to delete room: {e}")
+        raise
 
     return redirect(url_for('employee.manage_rooms'))
 
@@ -899,9 +898,9 @@ def add_room_problem():
             flash("✅ Room problem reported successfully.")
             return redirect(url_for('employee.manage_room_problems'))
 
-        except Exception as e:
+        except Exception:
             db.session.rollback()
-            flash(f"❌ Failed to add room problem: {e}")
+            raise
 
     return render_template("employee/room_problem_form.html", mode='add', hotel_id=hotel_id, current_date=date.today().isoformat())
 
@@ -954,9 +953,9 @@ def edit_room_problem(room_id, problem):
             flash("✅ Room problem updated.")
             return redirect(url_for('employee.manage_room_problems'))
 
-        except Exception as e:
+        except Exception:
             db.session.rollback()
-            flash(f"❌ Update failed: {e}")
+            raise
 
     return render_template("employee/room_problem_form.html", mode='edit', problem_data=room_problem, current_date=date.today().isoformat())
 
@@ -994,9 +993,9 @@ def delete_room_problem(room_id, problem):
         })
         db.session.commit()
         flash("✅ Room problem deleted.")
-    except Exception as e:
+    except Exception:
         db.session.rollback()
-        flash(f"❌ Deletion failed: {e}")
+        raise
 
     return redirect(url_for('employee.manage_room_problems'))
 
@@ -1043,9 +1042,9 @@ def delete_booking(booking_id):
         db.session.execute(text("DELETE FROM Booking WHERE BookingID = :bid"), {'bid': booking_id})
         db.session.commit()
         flash("✅ Booking archived and deleted.")
-    except Exception as e:
+    except Exception:
         db.session.rollback()
-        flash(f"❌ Failed to delete booking: {e}")
+        raise
 
     return redirect(url_for('employee.view_bookings'))
 
@@ -1122,9 +1121,9 @@ def delete_rental(rental_id):
 
         db.session.commit()
         flash("✅ Rental (and booking if existed) archived and deleted.")
-    except Exception as e:
+    except Exception:
         db.session.rollback()
-        flash(f"❌ Failed to delete rental: {e}")
+        raise
 
     return redirect(url_for('employee.view_rentals'))
 
@@ -1152,9 +1151,9 @@ def add_payment():
         })
         db.session.commit()
         flash("✅ Payment added successfully.")
-    except Exception as e:
+    except Exception:
         db.session.rollback()
-        flash(f"❌ Failed to add payment: {e}")
+        raise
 
     return redirect(url_for('employee.view_rentals'))
 

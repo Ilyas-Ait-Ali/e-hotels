@@ -120,9 +120,9 @@ def register():
 
             return render_template('register_success.html', customer_id=new_customer_id, full_name=full_name)
 
-        except Exception as e:
+        except Exception:
             db.session.rollback()
-            return render_template('register.html', error=f"❌ Registration failed: {e}")
+            raise
 
     return render_template('register.html')
 

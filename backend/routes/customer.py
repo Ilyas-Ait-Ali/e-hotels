@@ -184,16 +184,9 @@ def book_room():
             checkout=checkout
         )
 
-    except Exception as e:
+    except Exception:
         db.session.rollback()
-        error_msg = str(e).lower()
-        if 'unresolved problems' in error_msg:
-            flash("❌ Cannot book this room because it has unresolved issues.")
-        elif '5 or more active bookings' in error_msg:
-            flash("❌ You already have 5 or more active bookings.")
-        else:
-            flash(f"❌ Booking failed: {e}")
-        return redirect(url_for('customer.search_rooms'))
+        raise
 
 
 @bp_customer.route('/customer/cancel-booking', methods=['POST'])
@@ -212,13 +205,9 @@ def cancel_booking():
         """), {'bid': booking_id})
         db.session.commit()
         flash("✅ Booking successfully cancelled.")
-    except Exception as e:
+    except Exception:
         db.session.rollback()
-        error_msg = str(e).lower()
-        if 'cannot cancel' in error_msg:
-            flash("❌ You cannot cancel a booking on the day of check-in.")
-        else:
-            flash(f"❌ Failed to cancel booking: {e}")
+        raise
 
     return redirect(url_for('customer.my_bookings'))
 
