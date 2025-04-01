@@ -5,6 +5,23 @@
 {% block content %}
 <h2>🏨 Manage Rooms</h2>
 
+<form method="GET" class="mb-3 row g-2 align-items-center">
+    <div class="col-auto">
+        <label for="sort" class="form-label">Sort By:</label>
+    </div>
+    <div class="col-auto">
+        <select name="sort" id="sort" class="form-select" onchange="this.form.submit()">
+            <option value="roomid_asc" {% if sort == 'roomid_asc' %}selected{% endif %}>🔢 Room ID (Ascending)</option>
+            <option value="roomid_desc" {% if sort == 'roomid_desc' %}selected{% endif %}>🔢 Room ID (Descending)</option>
+            <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>💰 Price (Low to High)</option>
+            <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>💰 Price (High to Low)</option>
+            <option value="capacity" {% if sort == 'capacity' %}selected{% endif %}>🛏 Capacity</option>
+            <option value="status" {% if sort == 'status' %}selected{% endif %}>🚦 Status</option>
+            <option value="viewtype" {% if sort == 'viewtype' %}selected{% endif %}>🌄 View Type</option>
+        </select>
+    </div>
+</form>
+
 <a href="{{ url_for('employee.add_room') }}" class="btn btn-success mb-3">➕ Add New Room</a>
 
 {% if rooms %}

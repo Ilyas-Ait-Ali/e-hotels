@@ -4,6 +4,24 @@
 {% block content %}
 <h2>🧑‍💼 Manage Employees</h2>
 
+<form method="GET" class="mb-3 row g-2 align-items-center">
+    <div class="col-auto">
+        <label for="sort" class="form-label">Sort By:</label>
+    </div>
+    <div class="col-auto">
+        <select name="sort" id="sort" class="form-select" onchange="this.form.submit()">
+            <option value="id" {% if sort == 'id' %}selected{% endif %}>🆔 ID</option>
+            <option value="name" {% if sort == 'name' %}selected{% endif %}>👤 Name</option>
+            <option value="address" {% if sort == 'address' %}selected{% endif %}>🏠 Address</option>
+            <option value="position" {% if sort == 'position' %}selected{% endif %}>🎯 Position</option>
+            <option value="ssn" {% if sort == 'ssn' %}selected{% endif %}>🔒 SSN</option>
+            {% if session.position == 'Admin' %}
+            <option value="hotel" {% if sort == 'hotel' %}selected{% endif %}>🏨 Hotel ID</option>
+            {% endif %}
+        </select>
+    </div>
+</form>
+
 <a href="{{ url_for('employee.add_employee') }}" class="btn btn-success mb-3">➕ Add New Employee</a>
 
 {% if employees %}

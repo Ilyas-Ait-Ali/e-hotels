@@ -5,6 +5,22 @@
 {% block content %}
 <h2>🏨 Manage Hotels</h2>
 
+<form method="GET" class="mb-3 row g-2 align-items-center">
+    <div class="col-auto">
+        <label for="sort" class="form-label">Sort By:</label>
+    </div>
+    <div class="col-auto">
+        <select name="sort" id="sort" class="form-select" onchange="this.form.submit()">
+            <option value="id" {% if sort == 'id' %}selected{% endif %}>🆔 Hotel ID</option>
+            <option value="name" {% if sort == 'name' %}selected{% endif %}>🏨 Name</option>
+            <option value="address" {% if sort == 'address' %}selected{% endif %}>📍 Address</option>
+            <option value="category" {% if sort == 'category' %}selected{% endif %}>📦 Category</option>
+            <option value="num_rooms" {% if sort == 'num_rooms' %}selected{% endif %}>🛏 Number of Rooms</option>
+            <option value="rating" {% if sort == 'rating' %}selected{% endif %}>⭐ Rating</option>
+        </select>
+    </div>
+</form>
+
 <a href="{{ url_for('employee.add_hotel') }}" class="btn btn-success mb-3">➕ Add New Hotel</a>
 
 {% if hotels %}

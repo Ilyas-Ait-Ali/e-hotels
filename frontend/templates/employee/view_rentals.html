@@ -4,6 +4,23 @@
 {% block content %}
 <h2>🛏️ Manage Rentals</h2>
 
+<form method="GET" class="mb-3 row g-2 align-items-center">
+    <div class="col-auto">
+        <label for="sort" class="form-label">Sort By:</label>
+    </div>
+    <div class="col-auto">
+        <select name="sort" id="sort" class="form-select" onchange="this.form.submit()">
+            <option value="checkin_desc" {% if sort == 'checkin_desc' %}selected{% endif %}>📅 Check-in (Newest)</option>
+            <option value="checkin_asc" {% if sort == 'checkin_asc' %}selected{% endif %}>📅 Check-in (Oldest)</option>
+            <option value="customer" {% if sort == 'customer' %}selected{% endif %}>👤 Customer Name</option>
+            {% if session.position == 'Admin' %}
+            <option value="hotel" {% if sort == 'hotel' %}selected{% endif %}>🏨 Hotel Name</option>
+            {% endif %}
+            <option value="status" {% if sort == 'status' %}selected{% endif %}>🚦 Status</option>
+        </select>
+    </div>
+</form>
+
 {% if rentals %}
 <table class="table table-bordered table-hover">
     <thead class="table-dark">
@@ -47,7 +64,6 @@
             </td>
         </tr>
 
-        
         <div class="modal fade" id="paymentModal{{ r.rentalid }}" tabindex="-1" aria-labelledby="paymentModalLabel{{ r.rentalid }}" aria-hidden="true">
           <div class="modal-dialog">
             <form method="POST" action="{{ url_for('employee.add_payment') }}">

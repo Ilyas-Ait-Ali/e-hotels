@@ -182,11 +182,22 @@ def manage_customers():
         flash("❌ Only admins can manage customers.")
         return redirect(url_for('employee.employee_dashboard'))
 
-    customers = db.session.execute(text("""
-        SELECT * FROM Customer ORDER BY FullName
+    sort = request.args.get("sort", "id") 
+
+    sort_map = {
+        "fullname": "FullName",
+        "id": "CustomerID",
+        "registered": "RegistrationDate DESC",
+        "idtype": "IDType",
+    }
+    order_clause = sort_map.get(sort, "CustomerID")
+
+    customers = db.session.execute(text(f"""
+        SELECT * FROM Customer ORDER BY {order_clause}
     """)).fetchall()
 
-    return render_template("employee/customers.html", customers=customers)
+    return render_template("employee/customers.html", customers=customers, sort=sort)
+
 
 @bp_employee.route('/employee/customers/add', methods=['GET', 'POST'])
 def add_customer():
@@ -288,27 +299,43 @@ def manage_employees():
 
     position = session.get('position')
     hotel_id = session.get('hotel_id')
+    sort = request.args.get("sort", "id")  
+
+    sort_map = {
+        "name": "FullName",
+        "address": "Address",
+        "position": "Position",
+        "ssn": "SSN",
+        "hotel": "HotelID",
+        "id": "EmployeeID"
+    }
+
+    order_clause = sort_map.get(sort, "EmployeeID")
 
     if position == 'Admin':
-        employees = db.session.execute(text("""
+        query = text(f"""
             SELECT EmployeeID, FullName, Address, Position, SSN, HotelID
             FROM Employee
-            ORDER BY FullName
-        """)).fetchall()
+            ORDER BY {order_clause}
+        """)
+        params = {}
 
     elif position == 'Manager':
-        employees = db.session.execute(text("""
+        query = text(f"""
             SELECT EmployeeID, FullName, Address, Position, SSN, HotelID
             FROM Employee
             WHERE HotelID = :hid
-            ORDER BY FullName
-        """), {'hid': hotel_id}).fetchall()
+            ORDER BY {order_clause}
+        """)
+        params = {'hid': hotel_id}
 
     else:
         flash("❌ Access denied.")
         return redirect(url_for('employee.employee_dashboard'))
 
-    return render_template("employee/employees.html", employees=employees)
+    employees = db.session.execute(query, params).fetchall()
+    return render_template("employee/employees.html", employees=employees, sort=sort)
+
 
 @bp_employee.route('/employee/employees/add', methods=['GET', 'POST'])
 def add_employee():
@@ -481,8 +508,25 @@ def manage_hotels():
         flash("❌ Only admins can access hotel management.")
         return redirect(url_for('auth.login'))
 
-    hotels = db.session.execute(text("SELECT * FROM Hotel ORDER BY HotelName")).fetchall()
-    return render_template("employee/hotels.html", hotels=hotels)
+    sort = request.args.get("sort", "id") 
+
+    sort_map = {
+        "name": "HotelName",
+        "address": "Address",
+        "category": "Category",
+        "num_rooms": "Num_Rooms DESC",
+        "rating": "Rating DESC",
+        "id": "HotelID"
+    }
+
+    order_clause = sort_map.get(sort, "HotelID")
+
+    hotels = db.session.execute(text(f"""
+        SELECT * FROM Hotel ORDER BY {order_clause}
+    """)).fetchall()
+
+    return render_template("employee/hotels.html", hotels=hotels, sort=sort)
+
 
 
 @bp_employee.route('/employee/hotels/add', methods=['GET', 'POST'])
@@ -647,16 +691,33 @@ def manage_rooms():
 
     position = session.get('position')
     hotel_id = session.get('hotel_id')
+    sort = request.args.get('sort', 'roomid_asc')
+
+    sort_map = {
+        'roomid_asc': 'RoomID ASC',
+        'roomid_desc': 'RoomID DESC',
+        'price_asc': 'Price ASC',
+        'price_desc': 'Price DESC',
+        'capacity': "CASE Capacity WHEN 'single' THEN 1 WHEN 'double' THEN 2 WHEN 'triple' THEN 3 WHEN 'family' THEN 4 WHEN 'suite' THEN 5 ELSE 6 END",
+        'status': 'Status',
+        'viewtype': 'ViewType'
+    }
+
+    order_clause = sort_map.get(sort, 'RoomID ASC')
 
     if position == 'Admin':
-        rooms = db.session.execute(text("SELECT * FROM Room ORDER BY HotelID, RoomID")).fetchall()
+        query = text(f"SELECT * FROM Room ORDER BY {order_clause}")
+        params = {}
     elif position == 'Manager':
-        rooms = db.session.execute(text("SELECT * FROM Room WHERE HotelID = :hid ORDER BY RoomID"), {'hid': hotel_id}).fetchall()
+        query = text(f"SELECT * FROM Room WHERE HotelID = :hid ORDER BY {order_clause}")
+        params = {'hid': hotel_id}
     else:
         flash("❌ Access denied.")
         return redirect(url_for('employee.employee_dashboard'))
 
-    return render_template("employee/rooms.html", rooms=rooms)
+    rooms = db.session.execute(query, params).fetchall()
+    return render_template("employee/rooms.html", rooms=rooms, sort=sort)
+
 
 
 @bp_employee.route('/employee/rooms/add', methods=['GET', 'POST'])
@@ -826,14 +887,24 @@ def manage_room_problems():
 
     position = session.get('position')
     user_id = session.get('user_id')
-    hotel_id = session.get('hotel_id') 
+    hotel_id = session.get('hotel_id')
+    sort = request.args.get('sort', 'report_desc')
+
+    sort_map = {
+        'report_desc': 'rp.ReportDate DESC',
+        'report_asc': 'rp.ReportDate ASC',
+        'roomid': 'rp.RoomID',
+        'hotelname': 'h.HotelName',
+        'status': 'rp.Resolved',
+    }
+    order_clause = sort_map.get(sort, 'rp.ReportDate DESC')
 
     if position == 'Admin':
-        query = text("""
+        query = text(f"""
             SELECT rp.*, h.HotelName
             FROM RoomProblems rp
             JOIN Hotel h ON rp.HotelID = h.HotelID
-            ORDER BY rp.ReportDate DESC
+            ORDER BY {order_clause}
         """)
         problems = db.session.execute(query).fetchall()
 
@@ -842,19 +913,20 @@ def manage_room_problems():
             flash("⚠️ Hotel information missing for manager.")
             return redirect(url_for('employee.employee_dashboard'))
 
-        query = text("""
+        query = text(f"""
             SELECT rp.*, h.HotelName
             FROM RoomProblems rp
             JOIN Hotel h ON rp.HotelID = h.HotelID
             WHERE rp.HotelID = :hid
-            ORDER BY rp.ReportDate DESC
+            ORDER BY {order_clause}
         """)
         problems = db.session.execute(query, {'hid': hotel_id}).fetchall()
     else:
         flash("Access denied.")
         return redirect(url_for('employee.employee_dashboard'))
 
-    return render_template('employee/room_problems.html', problems=problems)
+    return render_template('employee/room_problems.html', problems=problems, sort=sort)
+
 
 
 @bp_employee.route('/employee/problems/add', methods=['GET', 'POST'])
@@ -1007,31 +1079,43 @@ def view_bookings():
 
     hotel_id = session.get('hotel_id')
     position = session.get('position')
+    sort = request.args.get('sort', 'checkin_desc')
+
+    order_map = {
+        'checkin_desc': 'b.CheckInDate DESC',
+        'checkin_asc': 'b.CheckInDate ASC',
+        'bookingdate': 'b.BookingDate DESC',
+        'customer': 'c.FullName',
+        'hotel': 'h.HotelName',
+        'status': 'b.Status'
+    }
+    order_clause = order_map.get(sort, 'b.CheckInDate DESC')
 
     if position == 'Admin':
-        query = text("""
+        query = text(f"""
             SELECT b.BookingID, c.FullName AS CustomerName, h.HotelName, b.RoomID,
                    b.BookingDate, b.CheckInDate, b.CheckOutDate, b.Status
             FROM Booking b
             JOIN Customer c ON b.CustomerID = c.CustomerID
             JOIN Hotel h ON b.HotelID = h.HotelID
-            ORDER BY b.CheckInDate DESC
+            ORDER BY {order_clause}
         """)
         params = {}
     else:
-        query = text("""
+        query = text(f"""
             SELECT b.BookingID, c.FullName AS CustomerName, h.HotelName, b.RoomID,
                    b.BookingDate, b.CheckInDate, b.CheckOutDate, b.Status
             FROM Booking b
             JOIN Customer c ON b.CustomerID = c.CustomerID
             JOIN Hotel h ON b.HotelID = h.HotelID
             WHERE b.HotelID = :hid
-            ORDER BY b.CheckInDate DESC
+            ORDER BY {order_clause}
         """)
         params = {'hid': hotel_id}
 
     bookings = db.session.execute(query, params).fetchall()
-    return render_template("employee/view_bookings.html", bookings=bookings)
+    return render_template("employee/view_bookings.html", bookings=bookings, sort=sort)
+
 
 @bp_employee.route('/employee/bookings/delete/<int:booking_id>', methods=['POST'])
 def delete_booking(booking_id):
@@ -1055,7 +1139,21 @@ def view_rentals():
 
     hotel_id = session.get('hotel_id')
     position = session.get('position')
+    sort = request.args.get('sort', 'checkin_desc')
 
+    
+    sort_options = {
+        'checkin_desc': 'r.CheckInDate DESC',
+        'checkin_asc': 'r.CheckInDate ASC',
+        'customer': 'c.FullName',
+        'hotel': 'h.HotelName',
+        'status': 'r.Status',
+        'payment': 'r.PaymentAmount DESC',
+        'payment_asc': 'r.PaymentAmount ASC'
+    }
+    order_clause = sort_options.get(sort, 'r.CheckInDate DESC')
+
+    
     db.session.execute(text("""
         UPDATE Rental
         SET Status = 'Completed'
@@ -1071,29 +1169,29 @@ def view_rentals():
     db.session.commit()
 
     if position == 'Admin':
-        query = text("""
+        query = text(f"""
             SELECT r.RentalID, c.FullName AS CustomerName, h.HotelName, r.RoomID,
                    r.CheckInDate, r.CheckOutDate, r.Status, r.PaymentAmount, r.PaymentMethod
             FROM Rental r
             JOIN Customer c ON r.CustomerID = c.CustomerID
             JOIN Hotel h ON r.HotelID = h.HotelID
-            ORDER BY r.CheckInDate DESC
+            ORDER BY {order_clause}
         """)
         params = {}
     else:
-        query = text("""
+        query = text(f"""
             SELECT r.RentalID, c.FullName AS CustomerName, h.HotelName, r.RoomID,
                    r.CheckInDate, r.CheckOutDate, r.Status, r.PaymentAmount, r.PaymentMethod
             FROM Rental r
             JOIN Customer c ON r.CustomerID = c.CustomerID
             JOIN Hotel h ON r.HotelID = h.HotelID
             WHERE r.HotelID = :hid
-            ORDER BY r.CheckInDate DESC
+            ORDER BY {order_clause}
         """)
         params = {'hid': hotel_id}
 
     rentals = db.session.execute(query, params).fetchall()
-    return render_template("employee/view_rentals.html", rentals=rentals)
+    return render_template("employee/view_rentals.html", rentals=rentals, sort=sort)
 
 @bp_employee.route('/employee/rentals/delete/<int:rental_id>', methods=['POST'])
 def delete_rental(rental_id):
