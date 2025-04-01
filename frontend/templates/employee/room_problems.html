@@ -4,6 +4,24 @@
 {% block content %}
 <h2>🛠️ Manage Room Problems</h2>
 
+<form method="GET" class="mb-3 row g-2 align-items-center">
+    <div class="col-auto">
+        <label for="sort" class="form-label">Sort By:</label>
+    </div>
+    <div class="col-auto">
+        <select name="sort" id="sort" class="form-select" onchange="this.form.submit()">
+            <option value="report_desc" {% if sort == 'report_desc' %}selected{% endif %}>🕓 Report Date (Newest)</option>
+            <option value="report_asc" {% if sort == 'report_asc' %}selected{% endif %}>🕓 Report Date (Oldest)</option>
+            <option value="roomid" {% if sort == 'roomid' %}selected{% endif %}>🛏 Room ID</option>
+            {% if session.position == 'Admin' %}
+            <option value="hotelname" {% if sort == 'hotelname' %}selected{% endif %}>🏨 Hotel Name</option>
+            {% endif %}
+            <option value="status" {% if sort == 'status' %}selected{% endif %}>✔️ Status (Resolved/Unresolved)</option>
+        </select>
+    </div>
+</form>
+
+
 <a href="{{ url_for('employee.add_room_problem') }}" class="btn btn-success mb-3">➕ Report New Problem</a>
 
 {% if problems %}

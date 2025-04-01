@@ -4,6 +4,20 @@
 {% block content %}
 <h2>👥 Manage Customers</h2>
 
+<form method="GET" class="mb-3 row g-2 align-items-center">
+    <div class="col-auto">
+        <label for="sort" class="form-label">Sort By:</label>
+    </div>
+    <div class="col-auto">
+        <select name="sort" id="sort" class="form-select" onchange="this.form.submit()">
+            <option value="id" {% if sort == 'id' %}selected{% endif %}>🆔 Customer ID</option>
+            <option value="fullname" {% if sort == 'fullname' %}selected{% endif %}>👤 Name (A-Z)</option>
+            <option value="registered" {% if sort == 'registered' %}selected{% endif %}>📅 Registration Date</option>
+            <option value="idtype" {% if sort == 'idtype' %}selected{% endif %}>🔐 ID Type</option>
+        </select>
+    </div>
+</form>
+
 <a href="{{ url_for('employee.add_customer') }}" class="btn btn-success mb-3">➕ Add New Customer</a>
 
 {% if customers %}
