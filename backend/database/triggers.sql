@@ -204,15 +204,25 @@ DROP TRIGGER IF EXISTS trg_update_room_status_rental ON Rental;
 DROP FUNCTION IF EXISTS update_room_status_rental CASCADE;
 
 CREATE OR REPLACE FUNCTION update_room_status_rental() RETURNS TRIGGER AS $$
+DECLARE
+    today DATE := CURRENT_DATE;
 BEGIN
-    -- When rental becomes Ongoing
-    IF NEW.Status = 'Ongoing' AND (TG_OP = 'INSERT' OR OLD.Status != 'Ongoing') THEN
+    -- If status is not provided or is NULL, infer it
+    IF NEW.Status IS NULL THEN
+        IF today BETWEEN NEW.CheckInDate AND NEW.CheckOutDate THEN
+            NEW.Status := 'Ongoing';
+        ELSIF today > NEW.CheckOutDate THEN
+            NEW.Status := 'Completed';
+        END IF;
+    END IF;
+
+    -- Update the room status accordingly
+    IF NEW.Status = 'Ongoing' THEN
         UPDATE Room
         SET Status = 'Occupied'
         WHERE RoomID = NEW.RoomID AND HotelID = NEW.HotelID;
 
-    -- When rental is Completed
-    ELSIF NEW.Status = 'Completed' AND (OLD.Status IS DISTINCT FROM 'Completed') THEN
+    ELSIF NEW.Status = 'Completed' THEN
         UPDATE Room
         SET Status = 'Available'
         WHERE RoomID = NEW.RoomID AND HotelID = NEW.HotelID;
@@ -252,18 +262,19 @@ DROP TRIGGER IF EXISTS trg_prevent_room_deletion ON Room;
 DROP FUNCTION IF EXISTS prevent_deleting_active_rooms CASCADE;
 
 CREATE OR REPLACE FUNCTION prevent_deleting_active_rooms() RETURNS TRIGGER AS $$
+DECLARE
+    room_status TEXT;
 BEGIN
-    IF EXISTS (
-        SELECT 1 FROM Booking
-        WHERE HotelID = OLD.HotelID AND RoomID = OLD.RoomID
-          AND Status IN ('Pending', 'Checked-in')
-    ) OR EXISTS (
-        SELECT 1 FROM Rental
-        WHERE HotelID = OLD.HotelID AND RoomID = OLD.RoomID
-          AND Status = 'Ongoing'
-    ) THEN
-        RAISE EXCEPTION 'Cannot delete room: currently booked or rented.';
+    -- Get current room status
+    SELECT Status INTO room_status
+    FROM Room
+    WHERE HotelID = OLD.HotelID AND RoomID = OLD.RoomID;
+
+    -- Only allow deletion if status is 'Available' or 'Out-of-Order'
+    IF room_status NOT IN ('Available', 'Out-of-Order') THEN
+        RAISE EXCEPTION '❌ Cannot delete room with status "%". Only Available or Out-of-Order rooms can be deleted.', room_status;
     END IF;
+
     RETURN OLD;
 END;
 $$ LANGUAGE plpgsql;
@@ -390,6 +401,31 @@ CREATE TRIGGER trg_restore_status_on_delete
 AFTER DELETE ON RoomProblems
 FOR EACH ROW
 EXECUTE FUNCTION restore_status_after_problem_delete();
+
+-- Trigger function to restrict problem reporting to only Available or Out-of-Order rooms
+DROP TRIGGER IF EXISTS trg_restrict_problem_reporting ON RoomProblems;
+DROP FUNCTION IF EXISTS restrict_problem_reporting CASCADE;
+
+CREATE OR REPLACE FUNCTION restrict_problem_reporting() RETURNS TRIGGER AS $$
+DECLARE
+    room_status TEXT;
+BEGIN
+    SELECT Status INTO room_status
+    FROM Room
+    WHERE HotelID = NEW.HotelID AND RoomID = NEW.RoomID;
+
+    IF room_status NOT IN ('Available', 'Out-of-Order') THEN
+        RAISE EXCEPTION '❌ You can only report problems for rooms that are Available or Out-of-Order. Current status: %', room_status;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_restrict_problem_reporting
+BEFORE INSERT ON RoomProblems
+FOR EACH ROW
+EXECUTE FUNCTION restrict_problem_reporting();
 
 -- Trigger function to prevent inserting a booking that overlaps with an existing booking or rental
 DROP TRIGGER IF EXISTS trg_prevent_overlapping_booking ON Booking;
