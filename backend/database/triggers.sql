@@ -11,7 +11,7 @@ BEGIN
           AND RoomID = NEW.RoomID
           AND Resolved = FALSE
     ) THEN
-        RAISE EXCEPTION 'Cannot book room with unresolved problems.';
+        RAISE EXCEPTION '⛔ Cannot book room with unresolved problems.';
     END IF;
     RETURN NEW;
 END;
@@ -36,7 +36,7 @@ BEGIN
       AND Status IN ('Pending', 'Checked-in');
 
     IF active_bookings_count >= 5 THEN
-        RAISE EXCEPTION 'Customer already has 5 or more active bookings.';
+        RAISE EXCEPTION '❌ Customer already has 5 or more active bookings.';
     END IF;
 
     RETURN NEW;
