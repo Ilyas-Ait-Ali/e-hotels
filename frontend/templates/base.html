@@ -58,6 +58,7 @@
                         </ul>
                     </li>
 
+                    {% if session.position in ['Admin', 'Manager'] %}
                     <!-- Room Management -->
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle {% if request.endpoint == 'employee.manage_room_problems' or request.endpoint == 'employee.manage_rooms' %}active{% endif %}" href="#" role="button" data-bs-toggle="dropdown">🛏 Room Management</a>
@@ -66,6 +67,8 @@
                             <li><a class="dropdown-item" href="{{ url_for('employee.manage_room_problems') }}">Room Problems</a></li>
                         </ul>
                     </li>
+                    {% endif %}
+                    
 
                     <!-- Manage Entities (Admin/Manager) -->
                     {% if session.position in ['Admin', 'Manager'] %}
