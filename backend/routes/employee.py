@@ -865,7 +865,7 @@ def edit_room(room_id):
 
 @bp_employee.route('/employee/rooms/delete/<int:room_id>', methods=['POST'])
 def delete_room(room_id):
-    if 'user_type' not in session or session['user_type'] != 'employee' or session.get('position') != 'Manager':
+    if 'user_type' not in session or session['user_type'] != 'employee':
         flash("Only managers can delete rooms.")
         return redirect(url_for('auth.login'))
 
