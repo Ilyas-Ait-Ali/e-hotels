@@ -863,14 +863,17 @@ def edit_room(room_id):
 
 
 
-@bp_employee.route('/employee/rooms/delete/<int:room_id>', methods=['POST'])
-def delete_room(room_id):
+@bp_employee.route('/employee/rooms/delete/<int:hotel_id>/<int:room_id>', methods=['POST'])
+def delete_room(hotel_id, room_id):
     if 'user_type' not in session or session['user_type'] != 'employee':
         flash("Only managers can delete rooms.")
         return redirect(url_for('auth.login'))
 
     try:
-        db.session.execute(text("DELETE FROM Room WHERE RoomID = :rid"), {'rid': room_id})
+        db.session.execute(
+            text("DELETE FROM Room WHERE HotelID = :hid AND RoomID = :rid"),
+            {'hid': hotel_id, 'rid': room_id}
+        )
         db.session.commit()
         flash("✅ Room deleted successfully.")
     except Exception:
@@ -878,6 +881,7 @@ def delete_room(room_id):
         raise
 
     return redirect(url_for('employee.manage_rooms'))
+
 
 
 @bp_employee.route('/employee/problems')
