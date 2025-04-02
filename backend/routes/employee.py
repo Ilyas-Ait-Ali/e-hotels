@@ -409,33 +409,49 @@ def edit_employee(employee_id):
         flash("❌ Employee not found.")
         return redirect(url_for('employee.manage_employees'))
 
-    # Permissions
+    # Restrict manager from editing themselves or other managers/admins
     if position == 'Manager':
-        # Managers can edit themselves
-        if employee.employeeid != current_user_id:
-            # But cannot edit Admins or Managers from other hotels
-            if employee.position in ['Admin', 'Manager'] or employee.hotelid != hotel_id:
-                flash("❌ Managers can only edit employees from their own hotel who are not Admin or Manager.")
-                return redirect(url_for('employee.manage_employees'))
+        if employee.employeeid == current_user_id:
+            flash("❌ Managers cannot edit themselves.")
+            return redirect(url_for('employee.manage_employees'))
+        if employee.position in ['Admin', 'Manager'] or employee.hotelid != hotel_id:
+            flash("❌ Managers can only edit employees from their own hotel who are not Admin or Manager.")
+            return redirect(url_for('employee.manage_employees'))
+
+    # Admin can edit a manager, but ensure at least one manager remains if demoting
+    if position == 'Admin' and employee.position == 'Manager' and employee.employeeid != current_user_id:
+        pass  # Allowed
+
+    # Admin can only edit themselves if there's another admin
+    if position == 'Admin' and employee.employeeid == current_user_id:
+        count_admins = db.session.execute(
+            text("SELECT COUNT(*) FROM Employee WHERE Position = 'Admin'")
+        ).scalar()
+        if count_admins <= 1:
+            flash("❌ Cannot remove your own admin rights unless another admin exists.")
+            return redirect(url_for('employee.manage_employees'))
 
     if request.method == 'POST':
         fullname = request.form.get('fullname')
         address = request.form.get('address')
         emp_position = request.form.get('position')
         ssn = request.form.get('ssn')
-        emp_hotel_id = int(request.form.get('hotel_id'))
+        emp_hotel_id_raw = request.form.get('hotel_id')
+        emp_hotel_id = int(emp_hotel_id_raw) if emp_hotel_id_raw and emp_hotel_id_raw.lower() != 'none' else None
 
-        if not all([fullname, address, emp_position, ssn, emp_hotel_id]):
-            flash("❌ All fields are required.")
+        if not all([fullname, address, emp_position, ssn]) or (emp_position != 'Admin' and emp_hotel_id is None):
+            flash("❌ All fields are required. Admins may leave hotel ID blank.")
             return redirect(url_for('employee.edit_employee', employee_id=employee_id))
 
-        # Restrict what a Manager can change
-        if position == 'Manager':
-            if emp_position in ['Admin', 'Manager']:
-                flash("❌ You cannot assign Admin or Manager roles.")
-                return redirect(url_for('employee.edit_employee', employee_id=employee_id))
-            if emp_hotel_id != hotel_id:
-                flash("❌ You can only assign employees to your own hotel.")
+        # Prevent demoting the only manager
+        if employee.position == 'Manager' and emp_position != 'Manager':
+            count_managers = db.session.execute(text("""
+                SELECT COUNT(*) FROM Employee
+                WHERE HotelID = :hid AND Position = 'Manager'
+            """), {'hid': employee.hotelid}).scalar()
+
+            if count_managers == 1:
+                flash("❌ Cannot remove the only manager of this hotel. Assign another manager first.")
                 return redirect(url_for('employee.edit_employee', employee_id=employee_id))
 
         try:
@@ -456,6 +472,14 @@ def edit_employee(employee_id):
                 'eid': employee_id
             })
             db.session.commit()
+
+            # If user edits themselves, update session and redirect to new dashboard
+            if employee.employeeid == current_user_id:
+                session['position'] = emp_position
+                session['hotel_id'] = emp_hotel_id
+                flash("✅ Your profile was updated. Redirecting you to your new dashboard.")
+                return redirect(url_for('employee.employee_dashboard'))
+
             flash("✅ Employee updated successfully.")
             return redirect(url_for('employee.manage_employees'))
 
@@ -472,6 +496,7 @@ def delete_employee(employee_id):
 
     position = session.get('position')
     hotel_id = session.get('hotel_id')
+    current_user_id = session.get('user_id')
 
     employee = db.session.execute(
         text("SELECT * FROM Employee WHERE EmployeeID = :eid"),
@@ -482,15 +507,34 @@ def delete_employee(employee_id):
         flash("❌ Employee not found.")
         return redirect(url_for('employee.manage_employees'))
 
-    if position == 'Admin' and employee.employeeid == session['user_id']:
+    # Prevent deleting self
+    if employee.employeeid == current_user_id:
         flash("⚠️ You cannot delete your own account.")
         return redirect(url_for('employee.manage_employees'))
 
-    elif position == 'Manager' and employee.employeeid == session['user_id']:
-        flash("⚠️ You cannot delete your own account.")
-        return redirect(url_for('employee.manage_employees'))
+    # Prevent deleting the only manager
+    if employee.position == 'Manager':
+        count_managers = db.session.execute(text("""
+            SELECT COUNT(*) FROM Employee
+            WHERE HotelID = :hid AND Position = 'Manager'
+        """), {'hid': employee.hotelid}).scalar()
 
-    # Manager restrictions
+        if count_managers <= 1:
+            flash("❌ Cannot delete the only manager of this hotel.")
+            return redirect(url_for('employee.manage_employees'))
+
+    # Prevent deleting the only admin
+    if employee.position == 'Admin':
+        count_admins = db.session.execute(text("""
+            SELECT COUNT(*) FROM Employee
+            WHERE Position = 'Admin'
+        """)).scalar()
+
+        if count_admins <= 1:
+            flash("❌ Cannot delete the only admin.")
+            return redirect(url_for('employee.manage_employees'))
+
+    # Manager permissions
     if position == 'Manager':
         if employee.hotelid != hotel_id or employee.position in ['Admin', 'Manager']:
             flash("❌ You do not have permission to delete this employee.")

@@ -17,7 +17,7 @@
 
     <div class="mb-3">
         <label class="form-label">Position</label>
-        <select name="position" class="form-select" required>
+        <select name="position" class="form-select" id="position-select" required>
             <option value="">Select...</option>
             {% if session['position'] == 'Admin' %}
                 {% for role in ['Admin', 'Manager', 'Receptionist'] %}
@@ -36,16 +36,28 @@
         <input type="text" name="ssn" class="form-control" pattern="\d{3}-\d{2}-\d{4}" title="Format: XXX-XX-XXXX" value="{{ employee.ssn if employee else '' }}" required>
     </div>
 
-    {% if session['position'] == 'Admin' %}
-        <div class="mb-3">
-            <label class="form-label">Hotel ID</label>
-            <input type="number" name="hotel_id" class="form-control" min="1" value="{{ employee.hotelid if employee else '' }}" required>
-        </div>
-    {% else %}
-        <input type="hidden" name="hotel_id" value="{{ session['hotel_id'] }}">
-    {% endif %}
+    <div class="mb-3" id="hotel-id-field">
+        <label class="form-label">Hotel ID</label>
+        <input type="number" name="hotel_id" class="form-control" min="1" value="{{ employee.hotelid if employee else '' }}" required>
+    </div>
 
     <button type="submit" class="btn btn-primary">{{ 'Add' if mode == 'add' else 'Update' }} Employee</button>
     <a href="{{ url_for('employee.manage_employees') }}" class="btn btn-secondary">Cancel</a>
 </form>
+
+<script>
+    document.getElementById('position-select').addEventListener('change', function () {
+        const hotelIdField = document.getElementById('hotel-id-field');
+        if (this.value === 'Admin') {
+            hotelIdField.style.display = 'none';
+            hotelIdField.querySelector('input').removeAttribute('required');
+        } else {
+            hotelIdField.style.display = 'block';
+            hotelIdField.querySelector('input').setAttribute('required', 'required');
+        }
+    });
+
+    // Trigger change event on page load to handle pre-selected values
+    document.getElementById('position-select').dispatchEvent(new Event('change'));
+</script>
 {% endblock %}
