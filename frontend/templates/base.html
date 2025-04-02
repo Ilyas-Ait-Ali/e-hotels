@@ -42,7 +42,7 @@
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle {% if 'booking' in request.endpoint %}active{% endif %}" href="#" role="button" data-bs-toggle="dropdown">📅 Bookings</a>
                         <ul class="dropdown-menu dropdown-menu-dark">
-                            <li><a class="dropdown-item" href="{{ url_for('employee.employee_dashboard') }}">Convert to Booking</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('employee.employee_dashboard') }}">Convert to Rental</a></li>
                             <li><a class="dropdown-item" href="{{ url_for('employee.view_bookings') }}">Manage Bookings</a></li>
                             <li><a class="dropdown-item" href="{{ url_for('employee.view_booking_archive') }}">Booking Archive</a></li>
                         </ul>

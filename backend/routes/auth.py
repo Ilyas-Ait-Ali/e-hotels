@@ -73,7 +73,8 @@ def login():
             session['user_type'] = 'employee'
             session['user_name'] = result[3]
 
-            if db_position == 'Manager':
+            # Set hotel_id for Manager and Receptionist
+            if db_position in ['Manager', 'Receptionist']:
                 session['hotel_id'] = result[2]
 
             return redirect(url_for('employee.employee_dashboard'))

@@ -48,6 +48,10 @@ def convert_booking():
     employee_id = session.get('user_id')
     booking_id = request.form.get('booking_id')
 
+    if position not in ['Admin', 'Manager', 'Receptionist']:
+        flash("❌ Access denied.")
+        return redirect(url_for('employee.employee_dashboard'))
+
     try:
         booking = db.session.execute(text("""
             SELECT * FROM Booking WHERE BookingID = :bid
@@ -113,12 +117,12 @@ def rent_room():
         payment_method = request.form.get("payment_method")
         employee_id = session["user_id"]
 
+        # Only admins need to provide a hotel_id explicitly
         if position == "Admin":
             hotel_id = request.form.get("hotel_id")
-
-        if not hotel_id:
-            flash("❌ Hotel ID is required for Admin.")
-            return redirect(url_for('employee.rent_room'))
+            if not hotel_id:
+                flash("❌ Hotel ID is required for Admin.")
+                return redirect(url_for('employee.rent_room'))
 
         # Validate CustomerID + Name
         customer = db.session.execute(
@@ -686,8 +690,9 @@ def delete_hotel(hotel_id):
 
 @bp_employee.route('/employee/rooms')
 def manage_rooms():
-    if 'user_type' not in session or session['user_type'] != 'employee':
-        return redirect(url_for('auth.login'))
+    if 'user_type' not in session or session['user_type'] != 'employee' or session.get('position') not in ['Admin', 'Manager']:
+        flash("❌ Access denied.")
+        return redirect(url_for('employee.employee_dashboard'))
 
     position = session.get('position')
     hotel_id = session.get('hotel_id')
@@ -722,15 +727,12 @@ def manage_rooms():
 
 @bp_employee.route('/employee/rooms/add', methods=['GET', 'POST'])
 def add_room():
-    if 'user_type' not in session or session['user_type'] != 'employee':
-        return redirect(url_for('auth.login'))
+    if 'user_type' not in session or session['user_type'] != 'employee' or session.get('position') not in ['Admin', 'Manager']:
+        flash("❌ Access denied.")
+        return redirect(url_for('employee.employee_dashboard'))
 
     position = session.get('position')
     hotel_id = session.get('hotel_id')
-
-    if position not in ['Admin', 'Manager']:
-        flash("❌ Access denied.")
-        return redirect(url_for('employee.employee_dashboard'))
 
     if request.method == 'POST':
         try:
@@ -787,8 +789,9 @@ def add_room():
 
 @bp_employee.route('/employee/rooms/edit/<int:room_id>', methods=['GET', 'POST'])
 def edit_room(room_id):
-    if 'user_type' not in session or session['user_type'] != 'employee':
-        return redirect(url_for('auth.login'))
+    if 'user_type' not in session or session['user_type'] != 'employee' or session.get('position') not in ['Admin', 'Manager']:
+        flash("❌ Access denied.")
+        return redirect(url_for('employee.employee_dashboard'))
 
     position = session.get('position')
     hotel_id = session.get('hotel_id')
@@ -865,9 +868,9 @@ def edit_room(room_id):
 
 @bp_employee.route('/employee/rooms/delete/<int:hotel_id>/<int:room_id>', methods=['POST'])
 def delete_room(hotel_id, room_id):
-    if 'user_type' not in session or session['user_type'] != 'employee':
-        flash("Only managers can delete rooms.")
-        return redirect(url_for('auth.login'))
+    if 'user_type' not in session or session['user_type'] != 'employee' or session.get('position') not in ['Admin', 'Manager']:
+        flash("❌ Access denied.")
+        return redirect(url_for('employee.employee_dashboard'))
 
     try:
         db.session.execute(
@@ -1085,6 +1088,10 @@ def view_bookings():
     position = session.get('position')
     sort = request.args.get('sort', 'checkin_desc')
 
+    if position not in ['Admin', 'Manager', 'Receptionist']:
+        flash("❌ Access denied.")
+        return redirect(url_for('employee.employee_dashboard'))
+
     order_map = {
         'checkin_desc': 'b.CheckInDate DESC',
         'checkin_asc': 'b.CheckInDate ASC',
@@ -1144,6 +1151,10 @@ def view_rentals():
     hotel_id = session.get('hotel_id')
     position = session.get('position')
     sort = request.args.get('sort', 'checkin_desc')
+
+    if position not in ['Admin', 'Manager', 'Receptionist']:
+        flash("❌ Access denied.")
+        return redirect(url_for('employee.employee_dashboard'))
 
     
     sort_options = {
@@ -1257,6 +1268,9 @@ def view_booking_archive():
     hotel_id = session.get('hotel_id')
     sort = request.args.get('sort', 'archivedate_desc')
 
+    if position not in ['Admin', 'Manager', 'Receptionist']:
+        flash("❌ Access denied.")
+        return redirect(url_for('employee.employee_dashboard'))
 
     order_map = {
         'archivedate_desc': 'ArchiveDate DESC',
@@ -1294,6 +1308,10 @@ def view_rental_archive():
     position = session.get('position')
     hotel_id = session.get('hotel_id')
     sort = request.args.get("sort", "archivedate_desc")
+
+    if position not in ['Admin', 'Manager', 'Receptionist']:
+        flash("❌ Access denied.")
+        return redirect(url_for('employee.employee_dashboard'))
 
     order_clause = "ArchiveDate DESC"
     if sort == "archivedate_asc":
