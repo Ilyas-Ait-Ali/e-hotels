@@ -43,9 +43,9 @@ venv\Scripts\activate     # Windows
 pip install -r requirements.txt
 ```
 4. **Create the PostgreSQL Database**
-Open pgAdmin 4.
-Create a new database called ehotels.
-Open the query editor and paste the contents of: schema.sql, constraints.sql, populate.sql, queries.sql, triggers.sql, indexes.sql, views.sql in that exact order, then execute the script.
+- Open pgAdmin 4.
+- Create a new database called ehotels.
+- Open the query editor and paste the contents of: schema.sql, constraints.sql, populate.sql, queries.sql, triggers.sql, indexes.sql, views.sql in that exact order, then execute the script.
 5. **Update Database Credentials**
 Open config.py and replace:
 ```python
