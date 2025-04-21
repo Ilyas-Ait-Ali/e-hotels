@@ -62,8 +62,8 @@ http://127.0.0.1:5000
 
 ## 🙌 Authors
 
-Member 1 – [Ilyas Ait Ali]
-Member 2 – [Yasmina Baba]
+- [Ilyas Ait Ali]
+- [Yasmina Baba]
 
 ---
 
