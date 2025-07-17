@@ -29,7 +29,7 @@ A web-based hotel booking platform developed using Flask and PostgreSQL. This pr
 
 1. **Clone the Repository**
 ```bash
-git clone https://github.com/your-username/e-hotel.git
+git clone https://github.com/Ilyas-Ait-Ali/e-hotel.git
 cd e-hotel/backend
 ```
 2. **Create a Virtual Environment**
